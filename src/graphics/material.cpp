@@ -199,8 +199,6 @@ void VolumeMaterial::render(Mesh* mesh, glm::mat4 model, Camera* camera)
 		return; 
 	}
 
-
-
 	this->shader->enable();
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -217,6 +215,7 @@ void VolumeMaterial::render(Mesh* mesh, glm::mat4 model, Camera* camera)
 void VolumeMaterial::renderInMenu()
 {
 
+	ImGui::ColorEdit3("Color", (float*)&this->color);
 	ImGui::SliderFloat("Absortion coefitient", &this->absortion_coefitient, 0.0f, 1.0f);
 
 

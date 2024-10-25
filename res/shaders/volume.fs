@@ -3,7 +3,6 @@
 in vec3 v_normal;
 in vec3 v_position;
 in vec3 v_world_position;
-in vec3 v_normal;
 in vec2 v_uv;
 in vec4 v_color;
 
@@ -11,6 +10,7 @@ in vec4 v_color;
 uniform vec3 u_camera_pos; 
 uniform vec3 u_box_min; 
 uniform vec3 u_box_max; 
+uniform float absortion_coefitient; 
 
 out vec4 FragColor;
 
@@ -18,32 +18,6 @@ out vec4 FragColor;
 in vec4 gl_FragCoord; 
 
 ////////////////
-
-void main() {
-	FragColor = vec4(v_normal, 1.0);
-    
-    vec3 ray_dir = v_position - u_camera_pos; 
-    ray_dir = normalize(ray_dir); 
-
-    int_dist = intersectAABB(u_camera_pos, ray_dir, u_box_min, u_box_max); 
-
-    float inner_dist = int_dist.x - int_dist.y; 
-
-    if(inner_dist <= 0.0) {
-        FragColor = v_color; 
-    }
-
-    // vec4 bg_color = vec4(0.1, 0.1, 0.1, 1.0); 
-    float absortion_coef = 1.0; 
-
-    optical_thickness = exp(-inner_dist * absortion_coef); 
-
-    v_color.w = v_color.w * (1.0 - optical_thickness); 
-    FragColor = v_color; 
-    
-}
-
-
 
 // adapted from intersectCube in https://github.com/evanw/webgl-path-tracing/blob/master/webgl-path-tracing.js
 
@@ -58,3 +32,31 @@ vec2 intersectAABB(vec3 rayOrigin, vec3 rayDir, vec3 boxMin, vec3 boxMax) {
     float tFar = min(min(t2.x, t2.y), t2.z);
     return vec2(tNear, tFar);
 };
+
+
+void main() {
+	FragColor = vec4(v_normal, 1.0);
+    
+    vec3 ray_dir = v_position - u_camera_pos; 
+    ray_dir = normalize(ray_dir); 
+
+    vec2 int_dist = intersectAABB(u_camera_pos, ray_dir, u_box_min, u_box_max); 
+
+    float inner_dist = int_dist.x - int_dist.y; 
+
+    if(inner_dist <= 0.0) {
+        FragColor = v_color; 
+    }
+
+    // vec4 bg_color = vec4(0.1, 0.1, 0.1, 1.0); 
+
+    float optical_thickness = exp(-inner_dist * absortion_coefitient); 
+
+    vec4 ret = vec4(v_color.xyz, v_color.w * (1.0 - optical_thickness)); 
+
+    FragColor = ret; 
+    
+}
+
+
+
