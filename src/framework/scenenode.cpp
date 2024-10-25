@@ -60,3 +60,27 @@ void SceneNode::renderInMenu()
 		ImGui::TreePop();
 	}
 }
+
+VolumeNode::~VolumeNode() { }
+
+VolumeNode::VolumeNode(const char* name) : SceneNode(name) {
+
+	this->type = NODE_VOLUME; 
+}
+
+void VolumeNode::render(Camera* camera)
+{
+	if (this->material && this->visible) {
+		this->material->render(this->mesh, this->model, camera);
+	}
+}
+
+void VolumeNode::renderWireframe(Camera* camera)
+{
+	SceneNode::render(camera);
+}
+
+void VolumeNode::renderInMenu()
+{
+	SceneNode::renderInMenu(); 
+}

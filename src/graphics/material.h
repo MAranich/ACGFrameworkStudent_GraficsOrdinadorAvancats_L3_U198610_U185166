@@ -66,6 +66,9 @@ class VolumeMaterial : public Material {
 		~VolumeMaterial();
 		VolumeMaterial(glm::vec4 color);
 
+		float absortion_coefitient; 
+
+
 		void setUniforms(Camera* camera, glm::mat4 model);
 		void render(Mesh* mesh, glm::mat4 model, Camera* camera);
 		void renderInMenu();

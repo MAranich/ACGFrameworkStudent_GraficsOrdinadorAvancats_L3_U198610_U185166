@@ -26,7 +26,7 @@ void Application::init(GLFWwindow* window)
     SceneNode* example = new SceneNode();
     example->mesh = Mesh::Get("res/meshes/sphere.obj");
     example->material = new StandardMaterial();
-    example->material = new VolumeMaterial();
+    example->material = new VolumeMaterial(glm::vec4(1, 0, 0, 1));
     this->node_list.push_back(example);
 }
 

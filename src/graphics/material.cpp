@@ -164,8 +164,8 @@ VolumeMaterial::~VolumeMaterial() { }
 VolumeMaterial::VolumeMaterial(glm::vec4 color) {
 
 	this->color = color;
-	//this->shader = Shader::Get("res/shaders/basic.vs", "res/shaders/flat.fs");
-
+	this->shader = Shader::Get("res/shaders/basic.vs", "res/shaders/volume.fs");
+	this->absortion_coefitient = 1.0f; 
 }
 
 void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
@@ -178,12 +178,46 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 
 	this->shader->setUniform("u_color", this->color);
 
+	glm::vec3 box_min = glm::vec3(-1, -1, -1);
+	glm::vec3 box_max = glm::vec3(1, 1, 1);
+	this->shader->setUniform("u_box_min", box_min);
+	this->shader->setUniform("u_box_max", box_max);
+
+	//this->shader->setUniform("u_bg_color", bg_color);
+	float absortion_coef = 1.0f; 
+	this->shader->setUniform("u_absortion_coef", absortion_coef); 
+
 }
 
 void VolumeMaterial::render(Mesh* mesh, glm::mat4 model, Camera* camera)
 {
+
+	if (mesh == NULL) {
+		return; 
+	}
+	if (this->shader == NULL) {
+		return; 
+	}
+
+
+
+	this->shader->enable();
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glDepthFunc(GL_LEQUAL);
+
+	setUniforms(camera, model);
+
+	mesh->render(GL_TRIANGLES);
+
+	this->shader->disable();
+
 }
 
 void VolumeMaterial::renderInMenu()
 {
+
+	ImGui::SliderFloat("Absortion coefitient", &this->absortion_coefitient, 0.0f, 1.0f);
+
+
 }

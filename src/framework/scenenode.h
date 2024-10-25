@@ -32,3 +32,19 @@ public:
 	virtual void renderWireframe(Camera* camera);
 	virtual void renderInMenu();
 };
+
+class VolumeNode : public SceneNode {
+public: 
+
+	VolumeNode(const char* name);
+	~VolumeNode();
+
+
+	void render(Camera* camera);
+	void renderWireframe(Camera* camera);
+	void renderInMenu();
+
+private: 
+
+
+};
