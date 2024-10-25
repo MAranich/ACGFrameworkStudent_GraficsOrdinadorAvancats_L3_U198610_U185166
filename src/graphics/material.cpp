@@ -158,3 +158,32 @@ void StandardMaterial::renderInMenu()
 
 	if (!this->show_normals) ImGui::ColorEdit3("Color", (float*)&this->color);
 }
+
+VolumeMaterial::~VolumeMaterial() { }
+
+VolumeMaterial::VolumeMaterial(glm::vec4 color) {
+
+	this->color = color;
+	//this->shader = Shader::Get("res/shaders/basic.vs", "res/shaders/flat.fs");
+
+}
+
+void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
+{
+
+	//upload node uniforms
+	this->shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
+	this->shader->setUniform("u_camera_position", camera->eye);
+	this->shader->setUniform("u_model", model);
+
+	this->shader->setUniform("u_color", this->color);
+
+}
+
+void VolumeMaterial::render(Mesh* mesh, glm::mat4 model, Camera* camera)
+{
+}
+
+void VolumeMaterial::renderInMenu()
+{
+}

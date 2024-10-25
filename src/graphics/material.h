@@ -56,4 +56,18 @@ public:
 	void setUniforms(Camera* camera, glm::mat4 model);
 	void render(Mesh* mesh, glm::mat4 model, Camera* camera);
 	void renderInMenu();
+
+
+};
+
+
+class VolumeMaterial : public Material {
+	public:
+		~VolumeMaterial();
+		VolumeMaterial(glm::vec4 color);
+
+		void setUniforms(Camera* camera, glm::mat4 model);
+		void render(Mesh* mesh, glm::mat4 model, Camera* camera);
+		void renderInMenu();
+
 };
