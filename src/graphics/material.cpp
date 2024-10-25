@@ -184,8 +184,8 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_box_max", box_max);
 
 	//this->shader->setUniform("u_bg_color", bg_color);
-	float absortion_coef = 1.0f; 
-	this->shader->setUniform("u_absortion_coef", absortion_coef); 
+	//printf("\t%f ", absortion_coefitient); is 1
+	this->shader->setUniform("u_absortion_coef", absortion_coefitient); 
 
 }
 
