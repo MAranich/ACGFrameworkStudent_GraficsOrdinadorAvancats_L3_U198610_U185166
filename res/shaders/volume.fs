@@ -13,7 +13,7 @@ uniform vec3 u_local_camera_position;
 uniform vec4 u_color; 
 uniform vec3 u_box_min; 
 uniform vec3 u_box_max; 
-uniform float absortion_coefitient; 
+uniform float u_absortion_coef; 
 
 out vec4 FragColor;
 
@@ -44,13 +44,14 @@ void main() {
         FragColor = vec4(0, 0, 0, 0); 
         return; 
     }
+    // inner_dist = 0 => exp() = 1
+    // inner_dist = 1000 => exp() = 0
+    float optical_thickness = exp(-inner_dist * u_absortion_coef); 
 
-    float optical_thickness = exp(-inner_dist * absortion_coefitient); 
-
-    //vec4 ret = vec4(u_color.xyz, u_color.w * (1.0 - optical_thickness)); 
-    vec4 ret = vec4(u_color.xyz, u_color.w * optical_thickness); 
-    //vec4 ret = u_color; 
-    //vec4 ret = vec4(u_color.xyz, 0.5); 
+    vec4 ret = vec4(u_color.xyz, u_color.w * (1.0-optical_thickness)); 
+    //ret = vec4(inner_dist, inner_dist, inner_dist, 1); 
+    //ret = u_color; 
+    //ret = vec4(u_color.xyz, 0.5); 
 
     FragColor = ret; 
     
@@ -58,7 +59,6 @@ void main() {
 
 
 // adapted from intersectCube in https://github.com/evanw/webgl-path-tracing/blob/master/webgl-path-tracing.js
-
 // compute the near and far intersections of the cube (stored in the x and y components) using the slab method
 // no intersection means vec.x > vec.y (really tNear > tFar)
 // no intersection means vec.y < vec.x (really tFar < tNear)
