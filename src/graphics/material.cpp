@@ -176,7 +176,16 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_camera_position", camera->eye);
 	this->shader->setUniform("u_model", model);
 
-	this->shader->setUniform("u_color", this->color);
+	glm::mat4 inv_model = glm::inverse(model);
+	glm::vec4 tmp = glm::vec4(camera->eye, 1.0f);
+	tmp = inv_model * tmp;
+	glm::vec3 camera_pos_local = (1.0f / tmp.w) * glm::vec3(tmp.x, tmp.y, tmp.z);
+
+	this->shader->setUniform("u_local_camera_position", camera_pos_local);
+
+	//printf("|%f, %f, %f|", this->color.x, this->color.y, this->color.z); 
+	glm::vec4 color_4 = glm::vec4(this->color.x, this->color.z, this->color.z, 1.0f); 
+	this->shader->setUniform("u_color", color_4);
 
 	glm::vec3 box_min = glm::vec3(-1, -1, -1);
 	glm::vec3 box_max = glm::vec3(1, 1, 1);
@@ -184,8 +193,9 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_box_max", box_max);
 
 	//this->shader->setUniform("u_bg_color", bg_color);
-	//printf("\t%f ", absortion_coefitient); is 1
-	this->shader->setUniform("u_absortion_coef", absortion_coefitient); 
+	//printf("\t%f ", absortion_coefitient); //is 1
+	this->shader->setUniform("u_absortion_coef", absortion_coefitient);
+	//this->shader->setUniform("u_absortion_coef", 0.0f);
 
 }
 
@@ -201,13 +211,18 @@ void VolumeMaterial::render(Mesh* mesh, glm::mat4 model, Camera* camera)
 
 	this->shader->enable();
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+
 	glDepthFunc(GL_LEQUAL);
 
 	setUniforms(camera, model);
 
 	mesh->render(GL_TRIANGLES);
 
+
+	glDisable(GL_BLEND);
 	this->shader->disable();
 
 }

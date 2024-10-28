@@ -1,4 +1,5 @@
 #version 450 core
+//#version 130 core
 
 in vec3 v_normal;
 in vec3 v_position;
@@ -8,6 +9,8 @@ in vec4 v_color;
 
 
 uniform vec3 u_camera_pos; 
+uniform vec3 u_local_camera_position; 
+uniform vec4 u_color; 
 uniform vec3 u_box_min; 
 uniform vec3 u_box_max; 
 uniform float absortion_coefitient; 
@@ -23,23 +26,31 @@ vec2 intersectAABB(vec3 rayOrigin, vec3 rayDir, vec3 boxMin, vec3 boxMax);
 
 
 void main() {
+    // u_camera_pos is in world space
+    // v_position is in ???
     
-    vec3 ray_dir = v_position - u_camera_pos; 
+    // Color is (0, 0, 0, 1) ???
+
+    // vec3 ray_dir = v_position - u_camera_pos; 
+    vec3 ray_dir = v_world_position - u_camera_pos; 
     ray_dir = normalize(ray_dir); 
 
     vec2 int_dist = intersectAABB(u_camera_pos, ray_dir, u_box_min, u_box_max); 
 
-    float inner_dist = int_dist.x - int_dist.y; 
+    float inner_dist = int_dist.y - int_dist.x; 
+    // ^positive if collision
 
     if(inner_dist <= 0.0) {
-        FragColor = v_color; 
+        FragColor = vec4(0, 0, 0, 0); 
+        return; 
     }
-
-    // vec4 bg_color = vec4(0.1, 0.1, 0.1, 1.0); 
 
     float optical_thickness = exp(-inner_dist * absortion_coefitient); 
 
-    vec4 ret = vec4(v_color.xyz, v_color.w * (1.0 - optical_thickness)); 
+    //vec4 ret = vec4(u_color.xyz, u_color.w * (1.0 - optical_thickness)); 
+    vec4 ret = vec4(u_color.xyz, u_color.w * optical_thickness); 
+    //vec4 ret = u_color; 
+    //vec4 ret = vec4(u_color.xyz, 0.5); 
 
     FragColor = ret; 
     
@@ -50,6 +61,8 @@ void main() {
 
 // compute the near and far intersections of the cube (stored in the x and y components) using the slab method
 // no intersection means vec.x > vec.y (really tNear > tFar)
+// no intersection means vec.y < vec.x (really tFar < tNear)
+// no intersection means vec.y - vec.x < 0 
 vec2 intersectAABB(vec3 rayOrigin, vec3 rayDir, vec3 boxMin, vec3 boxMax) {
     vec3 tMin = (boxMin - rayOrigin) / rayDir;
     vec3 tMax = (boxMax - rayOrigin) / rayDir;
