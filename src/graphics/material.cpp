@@ -165,7 +165,7 @@ VolumeMaterial::VolumeMaterial(glm::vec4 color) {
 
 	this->color = color;
 	this->shader = Shader::Get("res/shaders/basic.vs", "res/shaders/volume.fs");
-	this->absortion_coefitient = 1.0f; 
+	this->absortion_coefitient = 0.3f; 
 }
 
 void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
@@ -193,7 +193,8 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_box_max", box_max);
 
 	//this->shader->setUniform("u_bg_color", bg_color);
-	//printf("\t%f ", absortion_coefitient); //is 1
+	//printf("\t%f ", absortion_coefitient); //seems correct
+	//absortion_coefitient = 0.01f; 
 	this->shader->setUniform("u_absortion_coef", absortion_coefitient);
 	//this->shader->setUniform("u_absortion_coef", 0.0f);
 

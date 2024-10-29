@@ -27,7 +27,8 @@ void Application::init(GLFWwindow* window)
     example->mesh = Mesh::Get("res/meshes/cube.obj");
     //example->mesh->createCube(); 
     example->material = new StandardMaterial();
-    example->material = new VolumeMaterial(glm::vec4(1, 0, 0, 1));
+    //example->material = new VolumeMaterial(glm::vec4(1, 0, 0, 1));
+    example->material = new VolumeMaterial(glm::vec4(0, 0, 0, 1));
     this->node_list.push_back(example);
 }
 
@@ -44,7 +45,8 @@ void Application::update(float dt)
 void Application::render()
 {
     // set the clear color (the background color)
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    //glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(219.0f/255.0f, 237.0f / 255.0f, 242.0f / 255.0f, 1.0f);
 
     // Clear the window and the depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
