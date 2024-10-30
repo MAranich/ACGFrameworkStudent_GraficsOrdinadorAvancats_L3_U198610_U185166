@@ -198,6 +198,16 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_absortion_coef", absortion_coefitient);
 	//this->shader->setUniform("u_absortion_coef", 0.0f);
 
+	float noise_freq = 1.0f; 
+	this->shader->setUniform("u_noise_freq", noise_freq);
+
+	float step_length = 0.05f; 
+	this->shader->setUniform("u_step_length", noise_freq);
+	this->shader->setUniform("u_absortion_coef_mult", 0.01f);
+
+
+
+
 }
 
 void VolumeMaterial::render(Mesh* mesh, glm::mat4 model, Camera* camera)
