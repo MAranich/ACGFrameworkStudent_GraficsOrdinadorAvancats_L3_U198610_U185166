@@ -1,5 +1,5 @@
-#version 450 core
-//#version 130 core
+//#version 450 core
+#version 130 core
 
 in vec3 v_normal;
 in vec3 v_position;
@@ -15,6 +15,7 @@ uniform vec4 u_color;
 uniform vec3 u_box_min; 
 uniform vec3 u_box_max; 
 uniform float u_absortion_coef; 
+uniform vec4 u_bg_color;
 
 out vec4 FragColor;
 
@@ -44,7 +45,7 @@ void main() {
     // ^positive if collision
 
     if(inner_dist <= 0.0) {
-        FragColor = vec4(0, 0, 0, 0); 
+        FragColor = u_bg_color; 
         return; 
     }
 
