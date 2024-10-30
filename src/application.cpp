@@ -30,6 +30,10 @@ void Application::init(GLFWwindow* window)
     //example->material = new VolumeMaterial(glm::vec4(1, 0, 0, 1));
     example->material = new VolumeMaterial(glm::vec4(0, 0, 0, 1));
     this->node_list.push_back(example);
+
+    this->background_color = glm::vec3(0.1, 0.1, 0.1); 
+
+
 }
 
 void Application::update(float dt)
@@ -46,7 +50,9 @@ void Application::render()
 {
     // set the clear color (the background color)
     //glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClearColor(219.0f/255.0f, 237.0f / 255.0f, 242.0f / 255.0f, 1.0f);
+    //glClearColor(219.0f/255.0f, 237.0f / 255.0f, 242.0f / 255.0f, 1.0f);
+    
+    glClearColor(background_color[0], background_color[1], background_color[2], 1.0f);
 
     // Clear the window and the depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -70,6 +76,7 @@ void Application::renderGUI()
 {
     if (ImGui::TreeNodeEx("Scene", ImGuiTreeNodeFlags_DefaultOpen))
     {
+        ImGui::ColorEdit3("Backgroiund color", (float*)&this->background_color);
         ImGui::ColorEdit3("Ambient light", (float*)&this->ambient_light);
 
         if (ImGui::TreeNode("Camera")) {
