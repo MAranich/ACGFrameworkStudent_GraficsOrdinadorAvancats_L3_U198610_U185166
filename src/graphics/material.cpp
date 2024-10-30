@@ -189,10 +189,8 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 
 	glm::vec3 box_min = glm::vec3(-1, -1, -1);
 	glm::vec3 box_max = glm::vec3(1, 1, 1);
-	glm::vec4 bg_color = glm::vec4(0, 0, 0, 0);
 	this->shader->setUniform("u_box_min", box_min);
 	this->shader->setUniform("u_box_max", box_max);
-	this->shader->setUniform("u_bg_color", bg_color);
 
 	//this->shader->setUniform("u_bg_color", bg_color);
 	//printf("\t%f ", absortion_coefitient); //seems correct
