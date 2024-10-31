@@ -16,15 +16,14 @@ uniform vec3 u_local_camera_position;
 uniform vec4 u_color; 
 uniform vec3 u_box_min; 
 uniform vec3 u_box_max; 
-uniform float u_absortion_coef_mult; 
+uniform float u_absortion_coef; 
 uniform float u_noise_freq; 
 uniform float u_step_length; 
 
 out vec4 FragColor;
 
 float rand(vec2 n); 
-float noise(vec2 p, float freq); 
-float pNoise(vec2 p, int res); 
+float noise(vec3 p); 
 vec2 vec_3_to_2(vec3 x); 
 vec2 intersectAABB(vec3 rayOrigin, vec3 rayDir, vec3 boxMin, vec3 boxMax); 
 
@@ -49,25 +48,32 @@ void main() {
 
 	vec3 original_pos = u_local_camera_position + (t_near + u_step_length * 0.5) * ray_dir; 
 	float num_step = 0; 
-	float threshold_exp = 10.0; 
+	float threshold_exp = 100000000.0; 
+	//float inv_absortion_coef = 1.0/u_absortion_coef; 
 	float optical_thickness = 0; 
+	highp int res = int(u_noise_freq); 
+	res = 8; 
 
-	while( (num_step + 0.5) * u_step_length < inner_dist && optical_thickness < threshold_exp ) {
+
+	while( (num_step + 0.5) * u_step_length < inner_dist && 
+			u_absortion_coef * optical_thickness < threshold_exp ) {
 
 		vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; 
 
-		highp int res = int(u_noise_freq); 
-		float increase_opt = u_step_length * pNoise(vec_3_to_2(curren_position), res); 
+		float increase_opt = u_step_length * noise(curren_position); 
 		optical_thickness += increase_opt; 
 
 		num_step += 1.0; 
 	}
 	
-	optical_thickness = optical_thickness * u_absortion_coef_mult; 
+	optical_thickness = optical_thickness * u_absortion_coef; 
 
     float transmitansse = exp(-optical_thickness); 
 
-    vec4 ret = vec4(u_color.xyz, u_color.w * (1.0-optical_thickness)); 
+    vec4 ret = vec4(u_color.xyz, u_color.w * (1.0 - transmitansse)); 
+	//vec3 rand_vec = vec3(noise(v_world_position.xyz), noise(v_world_position.yzx), noise(v_world_position.zxy)); 
+    //rand_vec = normalize(rand_vec); 
+	//ret = vec4(rand_vec, 1); 
 
     FragColor = ret; 
     
@@ -102,43 +108,35 @@ float rand(vec2 n) {
 	return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
 }
 
-float noise(vec2 p, float freq ){
-	float unit = 1024/freq;
-	//float unit = screenWidth/freq;
-	vec2 ij = floor(p/unit);
-	vec2 xy = mod(p,unit)/unit;
-	//xy = 3.*xy*xy-2.*xy*xy*xy;
-	xy = .5*(1.-cos(PI*xy));
-	float a = rand((ij+vec2(0.,0.)));
-	float b = rand((ij+vec2(1.,0.)));
-	float c = rand((ij+vec2(0.,1.)));
-	float d = rand((ij+vec2(1.,1.)));
-	float x1 = mix(a, b, xy.x);
-	float x2 = mix(c, d, xy.x);
-	return mix(x1, x2, xy.y);
-}
+float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
+vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
+vec4 perm(vec4 x){return mod289(((x * 34.0) + 1.0) * x);}
 
-// Perlin noise
-float pNoise(vec2 p, int res){
-	float persistance = .5;
-	float n = 0.;
-	float normK = 0.;
-	float f = 4.;
-	float amp = 1.;
-	int iCount = 0;
-	for (int i = 0; i<50; i++){
-		n += amp * noise(p, f);
-		f*=2.;
-		normK+=amp;
-		amp*=persistance;
-		if (iCount == res) break;
-		iCount++;
-	}
-	float nf = n/normK;
-	return nf*nf*nf*nf;
+float noise(vec3 p){
+    vec3 a = floor(p);
+    vec3 d = p - a;
+    d = d * d * (3.0 - 2.0 * d);
+
+    vec4 b = a.xxyy + vec4(0.0, 1.0, 0.0, 1.0);
+    vec4 k1 = perm(b.xyxy);
+    vec4 k2 = perm(k1.xyxy + b.zzww);
+
+    vec4 c = k2 + a.zzzz;
+    vec4 k3 = perm(c);
+    vec4 k4 = perm(c + 1.0);
+
+    vec4 o1 = fract(k3 * (1.0 / 41.0));
+    vec4 o2 = fract(k4 * (1.0 / 41.0));
+
+    vec4 o3 = o2 * d.z + o1 * (1.0 - d.z);
+    vec2 o4 = o3.yw * d.x + o3.xz * (1.0 - d.x);
+
+    return o4.y * d.y + o4.x * (1.0 - d.y);
 }
 
 vec2 vec_3_to_2(vec3 v) {
 	// return vec2(v.x + 0.33 * v.z, v.y - 0.7421 * v.z); 
 	return vec2(v.x + cos(v.z), v.y + sin(v.z)); 
 }
+
+
