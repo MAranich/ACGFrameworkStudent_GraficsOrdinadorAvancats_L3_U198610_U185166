@@ -46,13 +46,11 @@ void main() {
         return; 
     }
 
-	vec3 original_pos = u_local_camera_position + (t_near + u_step_length * 0.5) * ray_dir; 
+	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
+	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
 	float num_step = 0; 
 	float threshold_exp = 100000000.0; 
-	//float inv_absortion_coef = 1.0/u_absortion_coef; 
 	float optical_thickness = 0; 
-	highp int res = int(u_noise_freq); 
-	res = 8; 
 
 
 	while( (num_step + 0.5) * u_step_length < inner_dist && 
@@ -60,7 +58,7 @@ void main() {
 
 		vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; 
 
-		float increase_opt = u_step_length * noise(curren_position); 
+		float increase_opt = u_step_length * noise(curren_position * PI); 
 		optical_thickness += increase_opt; 
 
 		num_step += 1.0; 
@@ -74,6 +72,9 @@ void main() {
 	//vec3 rand_vec = vec3(noise(v_world_position.xyz), noise(v_world_position.yzx), noise(v_world_position.zxy)); 
     //rand_vec = normalize(rand_vec); 
 	//ret = vec4(rand_vec, 1); 
+    //float x = num_step * 0.05; 
+    //ret = vec4(x, x, x, 1.0); 
+    //ret = vec4(u_step_length, u_step_length, u_step_length, 1.0); 
 
     FragColor = ret; 
     

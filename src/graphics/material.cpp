@@ -202,7 +202,7 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_noise_freq", noise_freq);
 
 	float step_length = 0.05f; 
-	this->shader->setUniform("u_step_length", noise_freq);
+	this->shader->setUniform("u_step_length", step_length);
 	//this->shader->setUniform("u_absortion_coef_mult", 0.01f);
 
 
