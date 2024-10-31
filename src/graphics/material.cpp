@@ -164,8 +164,20 @@ VolumeMaterial::~VolumeMaterial() { }
 VolumeMaterial::VolumeMaterial(glm::vec4 color) {
 
 	this->color = color;
-	this->shader = Shader::Get("res/shaders/basic.vs", "res/shaders/volume.fs");
+
+	// homogeneus
+	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_homogeneus.fs"));
+	//rand heterogeneus
+	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_rand_hetero.fs"));
+	//heterogeneus
+	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_hetero.fs")); 
+
+	this->current_shader = RandHeterogeneus; 
+	this->shader = shader_list[(int)current_shader];
+
 	this->absortion_coefitient = 0.3f; 
+	step_length = 0.05f;
+
 }
 
 void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
@@ -192,19 +204,9 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_box_min", box_min);
 	this->shader->setUniform("u_box_max", box_max);
 
-	//this->shader->setUniform("u_bg_color", bg_color);
-	//printf("\t%f ", absortion_coefitient); //seems correct
-	//absortion_coefitient = 0.01f; 
+
 	this->shader->setUniform("u_absortion_coef", absortion_coefitient);
-	//this->shader->setUniform("u_absortion_coef", 0.0f);
-
-	float noise_freq = 1.0f; 
-	this->shader->setUniform("u_noise_freq", noise_freq);
-
-	float step_length = 0.05f; 
 	this->shader->setUniform("u_step_length", step_length);
-	//this->shader->setUniform("u_absortion_coef_mult", 0.01f);
-
 
 
 
@@ -219,6 +221,8 @@ void VolumeMaterial::render(Mesh* mesh, glm::mat4 model, Camera* camera)
 	if (this->shader == NULL) {
 		return; 
 	}
+
+	this->shader = shader_list[(int)current_shader]; 
 
 	this->shader->enable();
 
@@ -243,6 +247,8 @@ void VolumeMaterial::renderInMenu()
 
 	ImGui::ColorEdit3("Color", (float*)&this->color);
 	ImGui::SliderFloat("Absortion coefitient", &this->absortion_coefitient, 0.0f, 1.0f);
+	ImGui::SliderFloat("Step length", &this->step_length, 0.001f, 1.0f);
 
+	ImGui::Combo("Name", (int*)&this->current_shader, "Homogeneus\0Heterogeneus random\0Heterogeneus\0"); 
 
 }

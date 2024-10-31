@@ -50,7 +50,6 @@ void Application::render()
 {
     // set the clear color (the background color)
     //glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    //glClearColor(219.0f/255.0f, 237.0f / 255.0f, 242.0f / 255.0f, 1.0f);
     
     glClearColor(background_color[0], background_color[1], background_color[2], 1.0f);
 

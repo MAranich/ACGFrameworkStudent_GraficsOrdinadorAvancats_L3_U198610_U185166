@@ -9,6 +9,8 @@
 #include "texture.h"
 #include "shader.h"
 
+enum VolumeShader {Homogeneus, RandHeterogeneus, Heterogeneus};
+
 class Material {
 public:
 
@@ -67,7 +69,10 @@ class VolumeMaterial : public Material {
 		VolumeMaterial(glm::vec4 color);
 
 		float absortion_coefitient; 
+		VolumeShader current_shader; 
 
+		std::vector<Shader*> shader_list;
+		float step_length = 0.05f; 
 
 		void setUniforms(Camera* camera, glm::mat4 model);
 		void render(Mesh* mesh, glm::mat4 model, Camera* camera);
