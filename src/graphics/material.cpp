@@ -170,12 +170,12 @@ VolumeMaterial::VolumeMaterial(glm::vec4 color) {
 	//rand heterogeneus
 	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_rand_hetero.fs"));
 	//heterogeneus
-	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_hetero.fs")); 
+	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_rand_emissive.fs")); 
 
-	this->current_shader = RandHeterogeneus; 
+	this->current_shader = Emissive;
 	this->shader = shader_list[(int)current_shader];
 
-	this->absortion_coefitient = 0.3f; 
+	this->absortion_coefitient = 0.9f; 
 	step_length = 0.05f;
 
 }
@@ -226,19 +226,53 @@ void VolumeMaterial::render(Mesh* mesh, glm::mat4 model, Camera* camera)
 
 	this->shader->enable();
 
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
+	if (current_shader == Homogeneus || current_shader == RandHeterogeneus) {
 
-	glDepthFunc(GL_LEQUAL);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_BLEND);
 
-	setUniforms(camera, model);
+		glDepthFunc(GL_LEQUAL);
 
-	mesh->render(GL_TRIANGLES);
+		setUniforms(camera, model);
+
+		mesh->render(GL_TRIANGLES);
 
 
-	glDisable(GL_BLEND);
-	this->shader->disable();
+		glDisable(GL_BLEND);
+		this->shader->disable();
+	}
+	else if (current_shader == Emissive) {
+
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		/*
+		source = new_color
+		d = framebuffer
+
+		source * 1 + framebuffer * (1-alfa)
+		
+		(1-alfa) = (1-( 1.0 - transmitansse)) = transmitansse
+
+		...
+		*/
+		glEnable(GL_BLEND);
+
+		glDepthFunc(GL_LEQUAL);
+
+		setUniforms(camera, model);
+
+		mesh->render(GL_TRIANGLES);
+
+
+		glDisable(GL_BLEND);
+		this->shader->disable();
+
+	}
+	else {
+		//DEFAULT_UNREACHABLE; 
+	}
+
 
 }
 
@@ -249,6 +283,6 @@ void VolumeMaterial::renderInMenu()
 	ImGui::SliderFloat("Absortion coefitient", &this->absortion_coefitient, 0.0f, 1.0f);
 	ImGui::SliderFloat("Step length", &this->step_length, 0.001f, 1.0f);
 
-	ImGui::Combo("Name", (int*)&this->current_shader, "Homogeneus\0Heterogeneus random\0Heterogeneus\0"); 
+	ImGui::Combo("Name", (int*)&this->current_shader, "Homogeneus\0Heterogeneus random\0Emissive\0"); 
 
 }

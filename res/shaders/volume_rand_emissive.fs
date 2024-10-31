@@ -17,7 +17,6 @@ uniform vec4 u_color;
 uniform vec3 u_box_min; 
 uniform vec3 u_box_max; 
 uniform float u_absortion_coef; 
-uniform float u_noise_freq; 
 uniform float u_step_length; 
 
 out vec4 FragColor;
@@ -31,6 +30,9 @@ vec3 world_to_local(vec3 world, mat4 model);
 
 void main() {
     
+    vec3 Le = (1.0/255.0) * vec3(200, 162, 200); 
+    /////////////////////////
+
     vec3 pos = world_to_local(v_world_position, u_model); 
     vec3 ray_dir = pos - u_local_camera_position; 
     ray_dir = normalize(ray_dir); 
@@ -51,14 +53,18 @@ void main() {
 	float num_step = 0; 
 	float threshold_exp = 100000000.0; 
 	float optical_thickness = 0; 
+    vec3 pixel_color = vec3(0, 0, 0); 
 
 
 	while( (num_step + 0.5) * u_step_length < inner_dist && 
 			u_absortion_coef * optical_thickness < threshold_exp ) {
 
 		vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; 
+        float current_absortion = noise(curren_position * PI); 
 
-		float increase_opt = u_step_length * noise(curren_position * PI); 
+        pixel_color += Le * current_absortion * exp(-optical_thickness * u_absortion_coef) * u_step_length; 
+
+		float increase_opt = u_step_length * current_absortion; 
 		optical_thickness += increase_opt; 
 
 		num_step += 1.0; 
@@ -67,14 +73,7 @@ void main() {
 	optical_thickness = optical_thickness * u_absortion_coef; 
 
     float transmitansse = exp(-optical_thickness); 
-
-    vec4 ret = vec4(u_color.xyz, u_color.w * (1.0 - transmitansse)); 
-	//vec3 rand_vec = vec3(noise(v_world_position.xyz), noise(v_world_position.yzx), noise(v_world_position.zxy)); 
-    //rand_vec = normalize(rand_vec); 
-	//ret = vec4(rand_vec, 1); 
-    //float x = num_step * 0.05; 
-    //ret = vec4(x, x, x, 1.0); 
-    //ret = vec4(u_step_length, u_step_length, u_step_length, 1.0); 
+    vec4 ret = vec4(pixel_color, 1.0 - transmitansse); 
 
     FragColor = ret; 
     

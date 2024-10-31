@@ -9,7 +9,7 @@
 #include "texture.h"
 #include "shader.h"
 
-enum VolumeShader {Homogeneus, RandHeterogeneus, Heterogeneus};
+enum VolumeShader {Homogeneus, RandHeterogeneus, Emissive};
 
 class Material {
 public:

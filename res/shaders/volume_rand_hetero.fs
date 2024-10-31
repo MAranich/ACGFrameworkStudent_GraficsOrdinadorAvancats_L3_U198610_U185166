@@ -48,7 +48,7 @@ void main() {
 	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
 	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
 	float num_step = 0; 
-	float threshold_exp = 100000000.0; 
+	float threshold_exp = 10.0; 
 	float optical_thickness = 0; 
 
 
