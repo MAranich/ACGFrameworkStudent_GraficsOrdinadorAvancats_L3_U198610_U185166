@@ -207,6 +207,8 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 
 	this->shader->setUniform("u_absortion_coef", absortion_coefitient);
 	this->shader->setUniform("u_step_length", step_length);
+	this->shader->setUniform("u_scale", scale);
+	this->shader->setUniform("u_detail", detail);
 
 
 
@@ -282,6 +284,9 @@ void VolumeMaterial::renderInMenu()
 	ImGui::ColorEdit3("Color", (float*)&this->color);
 	ImGui::SliderFloat("Absortion coefitient", &this->absortion_coefitient, 0.0f, 1.0f);
 	ImGui::SliderFloat("Step length", &this->step_length, 0.001f, 1.0f);
+	ImGui::SliderFloat("Scale", &this->scale, 0.001f, 2.09f);
+	ImGui::SliderFloat("Detail", &this->detail, 0.001f, 5.0f);
+
 
 	ImGui::Combo("Name", (int*)&this->current_shader, "Homogeneus\0Heterogeneus random\0Emissive\0"); 
 

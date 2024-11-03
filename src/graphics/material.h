@@ -73,6 +73,8 @@ class VolumeMaterial : public Material {
 
 		std::vector<Shader*> shader_list;
 		float step_length = 0.05f; 
+		float scale = 2.209f;
+		float detail = 5.0f;
 
 		void setUniforms(Camera* camera, glm::mat4 model);
 		void render(Mesh* mesh, glm::mat4 model, Camera* camera);
