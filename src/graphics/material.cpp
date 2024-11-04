@@ -282,8 +282,8 @@ void VolumeMaterial::renderInMenu()
 {
 
 	ImGui::ColorEdit3("Color", (float*)&this->color);
-	ImGui::SliderFloat("Absortion coefitient", &this->absortion_coefitient, 0.0f, 1.0f);
-	ImGui::SliderFloat("Step length", &this->step_length, 0.001f, 1.0f);
+	ImGui::SliderFloat("Absortion coefitient", &this->absortion_coefitient, 0.0f, 2.0f);
+	ImGui::SliderFloat("Step length", &this->step_length, 0.004f, 1.0f);
 	ImGui::SliderFloat("Scale", &this->scale, 0.001f, 2.09f);
 	ImGui::SliderFloat("Detail", &this->detail, 0.001f, 5.0f);
 
