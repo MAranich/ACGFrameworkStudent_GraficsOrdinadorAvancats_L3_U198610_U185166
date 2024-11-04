@@ -196,8 +196,8 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_local_camera_position", camera_pos_local);
 
 	//printf("|%f, %f, %f|", this->color.x, this->color.y, this->color.z); 
-	glm::vec4 color_4 = glm::vec4(this->color.x, this->color.z, this->color.z, 1.0f); 
-	this->shader->setUniform("u_color", color_4);
+	glm::vec4 color = glm::vec4(this->color.x, this->color.z, this->color.z, 1.0f); 
+	this->shader->setUniform("u_color", color);
 
 	glm::vec3 box_min = glm::vec3(-1, -1, -1);
 	glm::vec3 box_max = glm::vec3(1, 1, 1);
@@ -228,7 +228,7 @@ void VolumeMaterial::render(Mesh* mesh, glm::mat4 model, Camera* camera)
 
 	this->shader->enable();
 
-	if (current_shader == Homogeneus || current_shader == RandHeterogeneus) {
+	if (current_shader == Homogeneus || current_shader == RandHeterogeneus ) {
 
 		//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

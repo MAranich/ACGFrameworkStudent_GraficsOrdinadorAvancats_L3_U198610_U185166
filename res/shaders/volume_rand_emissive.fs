@@ -94,7 +94,7 @@ vec3 world_to_local(vec3 world, mat4 model);
 
 void main() {
     
-    vec3 Le = (1.0/255.0) * vec3(200, 162, 200); 
+    //vec3 Le = (1.0/255.0) * vec3(200, 162, 200); 
     /////////////////////////
 
     vec3 pos = world_to_local(v_world_position, u_model); 
@@ -128,7 +128,7 @@ void main() {
         
        // noise(curren_position * PI); 
 
-        pixel_color += Le * current_absortion * exp(-optical_thickness * u_absortion_coef) * u_step_length; 
+        pixel_color += (u_color.xyz) * current_absortion * exp(-optical_thickness * u_absortion_coef) * u_step_length; 
 
 		float increase_opt = u_step_length * current_absortion; 
 		optical_thickness += increase_opt; 
