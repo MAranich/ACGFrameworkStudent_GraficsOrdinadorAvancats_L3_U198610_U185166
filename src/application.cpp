@@ -31,7 +31,7 @@ void Application::init(GLFWwindow* window)
     example->material = new VolumeMaterial(glm::vec4(0, 0, 0, 1));
     this->node_list.push_back(example);
 
-    this->background_color = glm::vec3(0.1, 0.1, 0.1); 
+    this->background_color = glm::vec3(219.0/255.0, 237.0/255.0, 242.0/255.0); 
 
 
 }
