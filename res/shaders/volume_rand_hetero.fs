@@ -20,6 +20,7 @@ uniform float u_absortion_coef;
 uniform float u_step_length; 
 uniform float u_scale;
 uniform float u_detail;
+uniform vec3 u_bg_color;
 
 out vec4 FragColor;
 
@@ -130,11 +131,17 @@ void main() {
 		num_step += 1.0; 
 	}
 	
-	optical_thickness = optical_thickness * u_absortion_coef; 
+	//optical_thickness = optical_thickness * u_absortion_coef; 
 
-    float transmitansse = exp(-optical_thickness); 
+    //float transmitansse = exp(-optical_thickness); 
 
-    vec4 ret = vec4(u_color.xyz, u_color.w * (1.0 - transmitansse)); 
+   // vec4 ret = vec4(u_color.xyz, u_color.w * (1.0 - transmitansse)); 
+
+
+    optical_thickness = (optical_thickness  * u_absortion_coef); 
+    float transmissive = exp(-optical_thickness);
+
+    vec4 ret = vec4(u_bg_color.xyz * (transmissive), 1.0); 
 
     FragColor = ret; 
     

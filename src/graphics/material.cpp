@@ -91,6 +91,7 @@ void StandardMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
 	this->shader->setUniform("u_camera_position", camera->eye);
 	this->shader->setUniform("u_model", model);
+	
 
 	this->shader->setUniform("u_color", this->color);
 
@@ -198,6 +199,9 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	//printf("|%f, %f, %f|", this->color.x, this->color.y, this->color.z); 
 	glm::vec4 color = glm::vec4(this->color.x, this->color.z, this->color.z, 1.0f); 
 	this->shader->setUniform("u_color", color);
+
+	// DEFINE BACKGROUND COLOR
+	this->shader->setUniform("u_bg_color", Application::instance->background_color);
 
 	glm::vec3 box_min = glm::vec3(-1, -1, -1);
 	glm::vec3 box_max = glm::vec3(1, 1, 1);

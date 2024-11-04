@@ -15,6 +15,7 @@ uniform vec4 u_color;
 uniform vec3 u_box_min; 
 uniform vec3 u_box_max; 
 uniform float u_absortion_coef; 
+uniform vec3 u_bg_color;
 
 out vec4 FragColor;
 
@@ -50,9 +51,13 @@ void main() {
 
     // inner_dist = 0 => exp() = 1
     // inner_dist = 1000 => exp() = 0
-    float optical_thickness = exp(-inner_dist * u_absortion_coef); 
+    float optical_thickness = (inner_dist * u_absortion_coef); 
+    float transmissive = exp(-optical_thickness);
 
-    vec4 ret = vec4(u_color.xyz, u_color.w * (1.0-optical_thickness)); 
+    vec4 ret = vec4(u_bg_color.xyz * (transmissive), 1.0); 
+
+    //vec4 ret = vec4(u_color.xyz, u_color.w *(1-transmissive))
+
     //ret = vec4(vec3(inner_dist * u_absortion_coef), 1); 
     //ret = u_color; 
     //ret = vec4(u_color.xyz, 0.5); 
