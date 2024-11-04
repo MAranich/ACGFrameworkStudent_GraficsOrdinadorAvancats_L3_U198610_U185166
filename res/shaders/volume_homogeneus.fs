@@ -52,9 +52,9 @@ void main() {
     // inner_dist = 0 => exp() = 1
     // inner_dist = 1000 => exp() = 0
     float optical_thickness = (inner_dist * u_absortion_coef); 
-    float transmissive = exp(-optical_thickness);
+    float transmittance = exp(-optical_thickness);
 
-    vec4 ret = vec4(u_bg_color.xyz * (transmissive), 1.0); 
+    vec4 ret = vec4(u_bg_color.xyz * (transmittance), 1.0); 
 
     //vec4 ret = vec4(u_color.xyz, u_color.w *(1-transmissive))
 

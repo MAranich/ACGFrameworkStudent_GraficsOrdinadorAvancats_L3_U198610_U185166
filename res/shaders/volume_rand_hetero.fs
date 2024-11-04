@@ -139,9 +139,9 @@ void main() {
 
 
     optical_thickness = (optical_thickness  * u_absortion_coef); 
-    float transmissive = exp(-optical_thickness);
+    float transmittance = exp(-optical_thickness);
 
-    vec4 ret = vec4(u_bg_color.xyz * (transmissive), 1.0); 
+    vec4 ret = vec4(u_bg_color.xyz * (transmittance), 1.0); 
 
     FragColor = ret; 
     
