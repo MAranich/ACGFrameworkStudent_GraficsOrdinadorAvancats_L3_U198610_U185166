@@ -25,6 +25,11 @@ out vec4 FragColor;
 
 
 vec2 intersectAABB(vec3 rayOrigin, vec3 rayDir, vec3 boxMin, vec3 boxMax); 
+vec3 world_to_local(vec3 world, mat4 model); 
+
+
+//////////////////////////////////////////////////////////////////////////////////////////
+#define MAX_OCTAVES 16
 
 float hash1( float n ); 
 float noise( vec3 x ); 
@@ -32,8 +37,6 @@ float fractal_noise( vec3 P, float detail );
 float cnoise( vec3 P, float scale, float detail ); 
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
-vec3 world_to_local(vec3 world, mat4 model); 
 
 void main() {
     
@@ -117,6 +120,7 @@ vec3 world_to_local(vec3 world, mat4 model) {
 
 
 // NOISE FUNCTIONS ///////////////////////////////////////////////////////
+
 float hash1( float n )
 {
     return fract( n*17.0*fract( n*0.3183099 ) );
@@ -152,7 +156,6 @@ float noise( vec3 x )
     return -1.0+2.0*(k0 + k1*u.x + k2*u.y + k3*u.z + k4*u.x*u.y + k5*u.y*u.z + k6*u.z*u.x + k7*u.x*u.y*u.z);
 }
 
-#define MAX_OCTAVES 16
 
 float fractal_noise( vec3 P, float detail )
 {
