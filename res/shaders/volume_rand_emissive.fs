@@ -26,6 +26,96 @@ out vec4 FragColor;
 
 vec2 intersectAABB(vec3 rayOrigin, vec3 rayDir, vec3 boxMin, vec3 boxMax); 
 
+float hash1( float n ); 
+float noise( vec3 x ); 
+float fractal_noise( vec3 P, float detail ); 
+float cnoise( vec3 P, float scale, float detail ); 
+
+
+//////////////////////////////////////////////////////////////////////////////////////////
+vec3 world_to_local(vec3 world, mat4 model); 
+
+void main() {
+    
+
+    vec3 pos = world_to_local(v_world_position, u_model); 
+    vec3 ray_dir = pos - u_local_camera_position; 
+    ray_dir = normalize(ray_dir); 
+
+    vec2 int_dist = intersectAABB(u_local_camera_position, ray_dir, u_box_min, u_box_max); 
+
+	float t_near = int_dist.x; 
+	float t_far = int_dist.y; 
+    float inner_dist = t_far - t_near; 
+
+    if(inner_dist <= 0.0) {
+        FragColor = vec4(0, 0, 0, 0); 
+        return; 
+    }
+
+	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
+	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
+	float num_step = 0; 
+	float threshold_exp = 13.0; 
+	float optical_thickness = 0; 
+    vec3 pixel_color = vec3(0, 0, 0); 
+
+
+	while( (num_step + 0.5) * u_step_length < inner_dist && 
+			u_absortion_coef * optical_thickness < threshold_exp ) {
+
+        vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; 
+        float current_absortion = cnoise(curren_position,u_scale, u_detail);
+        
+        pixel_color += u_color.xyz * current_absortion * exp(-optical_thickness * u_absortion_coef) * u_step_length; 
+
+        float increase_opt = u_step_length * current_absortion; 
+        optical_thickness += increase_opt; 
+
+        num_step += 1.0; 
+	}
+	
+	optical_thickness = optical_thickness * u_absortion_coef; 
+
+    float transmitansse = exp(-optical_thickness); 
+    
+    if(false) {
+        pixel_color.x = clamp(pixel_color.x, 0.0, 1.0); 
+        pixel_color.y = clamp(pixel_color.y, 0.0, 1.0); 
+        pixel_color.z = clamp(pixel_color.z, 0.0, 1.0); 
+    }
+
+    vec4 ret = vec4(pixel_color, 1.0 - transmitansse); 
+
+    FragColor = ret; 
+    
+}
+
+
+// adapted from intersectCube in https://github.com/evanw/webgl-path-tracing/blob/master/webgl-path-tracing.js
+// compute the near and far intersections of the cube (stored in the x and y components) using the slab method
+// no intersection means vec.y - vec.x < 0 
+vec2 intersectAABB(vec3 rayOrigin, vec3 rayDir, vec3 boxMin, vec3 boxMax) {
+    vec3 tMin = (boxMin - rayOrigin) / rayDir;
+    vec3 tMax = (boxMax - rayOrigin) / rayDir;
+    vec3 t1 = min(tMin, tMax);
+    vec3 t2 = max(tMin, tMax);
+    float tNear = max(max(t1.x, t1.y), t1.z);
+    float tFar = min(min(t2.x, t2.y), t2.z);
+    return vec2(tNear, tFar);
+};
+
+// auxiliar function to transform world coordiantes to local ones
+vec3 world_to_local(vec3 world, mat4 model) {
+
+    vec4 tmp = vec4(world, 1.0); 
+    tmp = model * tmp; 
+    float inv_w = 1.0 / tmp.w; 
+
+    return inv_w * tmp.xyz; 
+}
+
+
 // NOISE FUNCTIONS ///////////////////////////////////////////////////////
 float hash1( float n )
 {
@@ -88,85 +178,3 @@ float cnoise( vec3 P, float scale, float detail )
     P *= scale;
     return clamp(fractal_noise(P, detail), 0.0, 1.0);
 }
-
-//////////////////////////////////////////////////////////////////////////////////////////
-vec3 world_to_local(vec3 world, mat4 model); 
-
-void main() {
-    
-    //vec3 Le = (1.0/255.0) * vec3(200, 162, 200); 
-    /////////////////////////
-
-    vec3 pos = world_to_local(v_world_position, u_model); 
-    vec3 ray_dir = pos - u_local_camera_position; 
-    ray_dir = normalize(ray_dir); 
-
-    vec2 int_dist = intersectAABB(u_local_camera_position, ray_dir, u_box_min, u_box_max); 
-
-	float t_near = int_dist.x; 
-	float t_far = int_dist.y; 
-    float inner_dist = t_far - t_near; 
-
-    if(inner_dist <= 0.0) {
-        FragColor = vec4(0, 0, 0, 0); 
-        return; 
-    }
-
-	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
-	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
-	float num_step = 0; 
-	float threshold_exp = 100000000.0; 
-	float optical_thickness = 0; 
-    vec3 pixel_color = vec3(0, 0, 0); 
-
-
-	while( (num_step + 0.5) * u_step_length < inner_dist && 
-			u_absortion_coef * optical_thickness < threshold_exp ) {
-
-        vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; 
-        float current_absortion = cnoise(curren_position,u_scale, u_detail);
-        
-       // noise(curren_position * PI); 
-
-        pixel_color += (u_color.xyz) * current_absortion * exp(-optical_thickness * u_absortion_coef) * u_step_length; 
-
-		float increase_opt = u_step_length * current_absortion; 
-		optical_thickness += increase_opt; 
-
-		num_step += 1.0; 
-	}
-	
-	optical_thickness = optical_thickness * u_absortion_coef; 
-
-    float transmitansse = exp(-optical_thickness); 
-    vec4 ret = vec4(pixel_color, 1.0 - transmitansse); 
-
-    FragColor = ret; 
-    
-}
-
-
-// adapted from intersectCube in https://github.com/evanw/webgl-path-tracing/blob/master/webgl-path-tracing.js
-// compute the near and far intersections of the cube (stored in the x and y components) using the slab method
-// no intersection means vec.y - vec.x < 0 
-vec2 intersectAABB(vec3 rayOrigin, vec3 rayDir, vec3 boxMin, vec3 boxMax) {
-    vec3 tMin = (boxMin - rayOrigin) / rayDir;
-    vec3 tMax = (boxMax - rayOrigin) / rayDir;
-    vec3 t1 = min(tMin, tMax);
-    vec3 t2 = max(tMin, tMax);
-    float tNear = max(max(t1.x, t1.y), t1.z);
-    float tFar = min(min(t2.x, t2.y), t2.z);
-    return vec2(tNear, tFar);
-};
-
-// auxiliar function to transform world coordiantes to local ones
-vec3 world_to_local(vec3 world, mat4 model) {
-
-    vec4 tmp = vec4(world, 1.0); 
-    tmp = model * tmp; 
-    float inv_w = 1.0 / tmp.w; 
-
-    return inv_w * tmp.xyz; 
-}
-
-

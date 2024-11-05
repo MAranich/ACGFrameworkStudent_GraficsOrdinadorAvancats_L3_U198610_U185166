@@ -197,7 +197,7 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_local_camera_position", camera_pos_local);
 
 	//printf("|%f, %f, %f|", this->color.x, this->color.y, this->color.z); 
-	glm::vec4 color = glm::vec4(this->color.x, this->color.z, this->color.z, 1.0f); 
+	glm::vec4 color = glm::vec4(this->color.x, this->color.y, this->color.z, 1.0f); 
 	this->shader->setUniform("u_color", color);
 
 	// DEFINE BACKGROUND COLOR
@@ -286,10 +286,10 @@ void VolumeMaterial::renderInMenu()
 {
 
 	ImGui::ColorEdit3("Color", (float*)&this->color);
-	ImGui::SliderFloat("Absortion coefitient", &this->absortion_coefitient, 0.0f, 2.0f);
+	ImGui::SliderFloat("Absortion coefitient", &this->absortion_coefitient, 0.0f, 4.0f);
 	ImGui::SliderFloat("Step length", &this->step_length, 0.004f, 1.0f);
-	ImGui::SliderFloat("Scale", &this->scale, 0.001f, 2.09f);
-	ImGui::SliderFloat("Detail", &this->detail, 0.001f, 5.0f);
+	ImGui::SliderFloat("Scale", &this->scale, 0.001f, 4.5f);
+	ImGui::SliderFloat("Detail", &this->detail, 0.001f, 8.0f);
 
 
 	ImGui::Combo("Name", (int*)&this->current_shader, "Homogeneus\0Heterogeneus random\0Emissive\0"); 
