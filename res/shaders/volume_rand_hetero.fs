@@ -32,14 +32,11 @@ vec2 intersectAABB(vec3 rayOrigin, vec3 rayDir, vec3 boxMin, vec3 boxMax);
 vec3 world_to_local(vec3 world, mat4 model); 
 
 // NOISE FUNCTIONS ///////////////////////////////////////////////////////
-float hash1( float n ); 
-
-float noise( vec3 x ); 
-
 #define MAX_OCTAVES 16
 
+float hash1( float n ); 
+float noise( vec3 x ); 
 float fractal_noise( vec3 P, float detail ); 
-
 float cnoise( vec3 P, float scale, float detail ); 
 
 //////////////////////////////////////////////////////////////////////////////////////////
