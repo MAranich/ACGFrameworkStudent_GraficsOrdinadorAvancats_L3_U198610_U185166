@@ -79,14 +79,7 @@ void main() {
 	}
 	
 	optical_thickness = optical_thickness * u_absortion_coef; 
-
     float transmitansse = exp(-optical_thickness); 
-    
-    if(false) {
-        pixel_color.x = clamp(pixel_color.x, 0.0, 1.0); 
-        pixel_color.y = clamp(pixel_color.y, 0.0, 1.0); 
-        pixel_color.z = clamp(pixel_color.z, 0.0, 1.0); 
-    }
 
     vec4 ret = vec4(pixel_color, 1.0 - transmitansse); 
 
