@@ -80,4 +80,8 @@ class VolumeMaterial : public Material {
 		void render(Mesh* mesh, glm::mat4 model, Camera* camera);
 		void renderInMenu();
 
+		void loadVDB(std::string file_path);
+
+		void estimate3DTexture(easyVDB::OpenVDBReader* vdbReader);
+
 };
