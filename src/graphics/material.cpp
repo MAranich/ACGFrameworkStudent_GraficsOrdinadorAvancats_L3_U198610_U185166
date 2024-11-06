@@ -5,8 +5,6 @@
 #include <istream>
 #include <fstream>
 #include <algorithm>
-#include "openvdbReader.h"
-#include "bbox.h"
 
 
 FlatMaterial::FlatMaterial(glm::vec4 color)
@@ -25,6 +23,8 @@ void FlatMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_model", model);
 
 	this->shader->setUniform("u_color", this->color);
+
+	this->shader->setUniform("u_source_density", 0);
 }
 
 void FlatMaterial::render(Mesh* mesh, glm::mat4 model, Camera* camera)
@@ -168,14 +168,22 @@ VolumeMaterial::VolumeMaterial(glm::vec4 color) {
 
 	this->color = color;
 
+	//Load shaders
+
 	// homogeneus
 	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_homogeneus.fs"));
 	//rand heterogeneus
 	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_rand_hetero.fs"));
 	//heterogeneus
-	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_rand_emissive.fs")); 
+	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_rand_emissive.fs"));
+	// Bunny
+	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_bunny.fs"));
 
-	this->current_shader = Emissive;
+	loadVDB("res/volumes/bunny_cloud.vdb"); 
+
+	//Deafult values
+
+	this->current_shader = Bunny;
 	this->shader = shader_list[(int)current_shader];
 
 	this->absortion_coefitient = 0.9f; 
@@ -215,6 +223,9 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_step_length", step_length);
 	this->shader->setUniform("u_scale", scale);
 	this->shader->setUniform("u_detail", detail);
+
+	const unsigned int TEXTURE_SLOT = 0; 
+	this->shader->setUniform("u_texture", this->texture, TEXTURE_SLOT);
 
 
 

@@ -9,7 +9,12 @@
 #include "texture.h"
 #include "shader.h"
 
-enum VolumeShader {Homogeneus, RandHeterogeneus, Emissive};
+// \libraries\easyVDB\src
+#include "openvdbReader.h"
+#include "bbox.h"
+
+
+enum VolumeShader {Homogeneus, RandHeterogeneus, Emissive, Bunny };
 
 class Material {
 public:
