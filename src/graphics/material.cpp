@@ -226,10 +226,7 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 void VolumeMaterial::render(Mesh* mesh, glm::mat4 model, Camera* camera)
 {
 
-	if (mesh == NULL) {
-		return; 
-	}
-	if (this->shader == NULL) {
+	if (mesh == NULL || this->shader == NULL) {
 		return; 
 	}
 
