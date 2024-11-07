@@ -33,8 +33,7 @@ void Application::init(GLFWwindow* window)
     //this->background_color = glm::vec3(219.0f / 255.0f, 237.0f / 255.0f, 242.0f / 255.0f);
     this->background_color = glm::vec3(0.1f, 0.1f, 0.1f);
 
-    //Light* sun = new Light(glm::vec3(2.0f, 2.0f, 2.0f), LIGHT_POINT, 1.111f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    Light* sun = new Light(glm::vec3(2.0f, 2.0f, 2.0f), LIGHT_DIRECTIONAL, 1.111f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    Light* sun = new Light(glm::vec3(1.5f, 1.5f, -1.5f), LIGHT_POINT, 1.111f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
     this->light_list.push_back(sun);
     this->node_list.push_back(sun);
 
