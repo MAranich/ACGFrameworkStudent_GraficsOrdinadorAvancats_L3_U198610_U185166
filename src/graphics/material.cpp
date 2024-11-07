@@ -5,7 +5,7 @@
 #include <istream>
 #include <fstream>
 #include <algorithm>
-
+#define MAX_LIGHT 8
 
 FlatMaterial::FlatMaterial(glm::vec4 color)
 {
@@ -204,6 +204,7 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	// DEFINE BACKGROUND COLOR
 	this->shader->setUniform("u_bg_color", Application::instance->background_color);
 
+
 	glm::vec3 box_min = glm::vec3(-1, -1, -1);
 	glm::vec3 box_max = glm::vec3(1, 1, 1);
 	this->shader->setUniform("u_box_min", box_min);
@@ -214,12 +215,27 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_step_length", step_length);
 	this->shader->setUniform("u_scale", scale);
 	this->shader->setUniform("u_detail", detail);
+	
 
 	const unsigned int TEXTURE_SLOT = 0; 
 	this->shader->setUniform("u_texture", this->texture, TEXTURE_SLOT);
 	this->shader->setUniform("u_source_density", this->density_mode);
+	
 
-
+	
+	//LIGHTS
+	glm::vec4 color2 = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	glm::vec3 light_pos_local = glm::vec3(1.5f, 1.5f, -1.5f);
+	
+	
+	// FOR LOOP FOR LIGHT SOURCES
+	//es queda sempre l'ultim valor
+	float intensity = 1.111f;
+	for (int l = 0; l < MAX_LIGHT; l++) {
+		this->shader->setUniform("u_light_intensity", intensity);
+		this->shader->setUniform("u_light_color", color2);
+		this->shader->setUniform("u_light_pos_local", light_pos_local);
+	}
 
 }
 

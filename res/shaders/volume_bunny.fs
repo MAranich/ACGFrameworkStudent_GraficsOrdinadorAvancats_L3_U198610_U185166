@@ -27,7 +27,7 @@ uniform sampler3D u_texture;
 uniform int u_num_lights; // invariant: 0 <= u_num_lights <= MAX_LIGHT
 uniform float u_light_intensity[MAX_LIGHT]; 
 uniform vec4 u_light_color[MAX_LIGHT]; 
-uniform vec3 u_light_pos[MAX_LIGHT]; 
+//uniform vec3 u_light_pos[MAX_LIGHT]; 
 uniform vec3 u_light_pos_local[MAX_LIGHT]; 
 
 uniform int u_num_scattering_steps; 
@@ -98,7 +98,7 @@ void main() {
         
         pixel_color += u_color.xyz * current_absortion * exp(-optical_thickness * u_absortion_coef) * u_step_length; 
 
-        pixel_color += get_in_scattering(curren_position); 
+        pixel_color += get_in_scattering(curren_position).xyz; 
 
         float increase_opt = u_step_length * current_absortion; 
         optical_thickness += increase_opt; 
