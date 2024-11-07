@@ -170,21 +170,12 @@ VolumeMaterial::VolumeMaterial(glm::vec4 color) {
 
 	//Load shaders
 
-	// homogeneus
-	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_homogeneus.fs"));
-	//rand heterogeneus
-	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_rand_hetero.fs"));
-	//heterogeneus
-	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_rand_emissive.fs"));
-	// Bunny
-	shader_list.push_back(Shader::Get("res/shaders/basic.vs", "res/shaders/volume_bunny.fs"));
-
 	loadVDB("res/volumes/bunny_cloud.vdb"); 
+	this->shader = Shader::Get("res/shaders/basic.vs", "res/shaders/volume_bunny.fs");
 
 	//Deafult values
 
-	this->current_shader = Bunny;
-	this->shader = shader_list[(int)current_shader];
+	this->density_mode = Bunny;
 
 	this->absortion_coefitient = 0.9f; 
 	step_length = 0.05f;
@@ -226,6 +217,7 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 
 	const unsigned int TEXTURE_SLOT = 0; 
 	this->shader->setUniform("u_texture", this->texture, TEXTURE_SLOT);
+	this->shader->setUniform("u_source_density", this->density_mode);
 
 
 
@@ -241,56 +233,32 @@ void VolumeMaterial::render(Mesh* mesh, glm::mat4 model, Camera* camera)
 		return; 
 	}
 
-	this->shader = shader_list[(int)current_shader]; 
-
 	this->shader->enable();
 
-	if (current_shader == Homogeneus || current_shader == RandHeterogeneus ) {
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	/*
+	source = new_color
+	d = framebuffer
 
-		//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_BLEND);
-
-		glDepthFunc(GL_LEQUAL);
-
-		setUniforms(camera, model);
-
-		mesh->render(GL_TRIANGLES);
-
-
-		glDisable(GL_BLEND);
-		this->shader->disable();
-	}
-	else if (current_shader == Emissive) {
-
-		//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-		/*
-		source = new_color
-		d = framebuffer
-
-		source * 1 + framebuffer * (1-alfa)
+	source * 1 + framebuffer * (1-alfa)
 		
-		(1-alfa) = (1-( 1.0 - transmitansse)) = transmitansse
+	(1-alfa) = (1-( 1.0 - transmitansse)) = transmitansse
 
-		...
-		*/
-		glEnable(GL_BLEND);
+	...
+	*/
+	glEnable(GL_BLEND);
 
-		glDepthFunc(GL_LEQUAL);
+	glDepthFunc(GL_LEQUAL);
 
-		setUniforms(camera, model);
+	setUniforms(camera, model);
 
-		mesh->render(GL_TRIANGLES);
+	mesh->render(GL_TRIANGLES);
 
 
-		glDisable(GL_BLEND);
-		this->shader->disable();
+	glDisable(GL_BLEND);
+	this->shader->disable();
 
-	}
-	else {
-		//DEFAULT_UNREACHABLE; 
-	}
 
 
 }
@@ -298,14 +266,13 @@ void VolumeMaterial::render(Mesh* mesh, glm::mat4 model, Camera* camera)
 void VolumeMaterial::renderInMenu()
 {
 
-	ImGui::ColorEdit3("Color", (float*)&this->color);
-	ImGui::SliderFloat("Absortion coefitient", &this->absortion_coefitient, 0.0f, 4.0f);
+	ImGui::ColorEdit3("Color"		, (float*)&this->color);
+	ImGui::SliderFloat("Absortion coefitient"	, &this->absortion_coefitient, 0.0f, 4.0f);
 	ImGui::SliderFloat("Step length", &this->step_length, 0.004f, 1.0f);
-	ImGui::SliderFloat("Scale", &this->scale, 0.001f, 4.5f);
-	ImGui::SliderFloat("Detail", &this->detail, 0.001f, 8.0f);
+	ImGui::SliderFloat("Scale"		, &this->scale		, 0.001f, 4.5f);
+	ImGui::SliderFloat("Detail"		, &this->detail		, 0.001f, 8.0f);
 
-
-	ImGui::Combo("Name", (int*)&this->current_shader, "Homogeneus\0Heterogeneus random\0Emissive\0"); 
+	ImGui::Combo("Density mode"		, (int*)&this->density_mode, "Homogeneus\0Noise\0Bunny\0"); 
 
 }
 
