@@ -181,7 +181,7 @@ VolumeMaterial::VolumeMaterial(glm::vec4 color) {
 	this->step_length = 0.05f;
 	this->scale = 2.209f;
 	this->detail = 5.0f;
-	this->num_scatter_steps = 3;
+	this->num_scatter_steps = 5;
 
 }
 
@@ -224,13 +224,8 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_texture", this->texture, TEXTURE_SLOT);
 	this->shader->setUniform("u_source_density", this->density_mode);
 	
-
+	// LIGHTS
 	
-	//LIGHTS
-	
-	
-	// FOR LOOP FOR LIGHT SOURCES
-	//es queda sempre l'ultim valor
 	int num_iters; // min of MAX_LIGHT and the actual number of lights
 	if (MAX_LIGHT < Application::instance->light_list.size()) {
 		num_iters = MAX_LIGHT; 
@@ -319,7 +314,7 @@ void VolumeMaterial::renderInMenu()
 	ImGui::SliderFloat("Step length", &this->step_length, 0.004f, 1.0f);
 	ImGui::SliderFloat("Scale"		, &this->scale		, 0.001f, 4.5f);
 	ImGui::SliderFloat("Detail"		, &this->detail		, 0.001f, 8.0f);
-	ImGui::DragInt("Num Scatter Steps", &this->num_scatter_steps, 0.005f, 0, 10); 
+	ImGui::DragInt("Num Scatter Steps", &this->num_scatter_steps, 0.01f, 0, 10); 
 
 	ImGui::Combo("Density mode"		, (int*)&this->density_mode, "Homogeneus\0Noise\0Bunny\0"); 
 
