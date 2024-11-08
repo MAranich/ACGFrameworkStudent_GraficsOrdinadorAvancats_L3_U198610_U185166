@@ -101,7 +101,10 @@ void main() {
         pixel_color += u_color.xyz * current_absortion * atenuation * u_step_length; 
 
         // in-scattering
-        pixel_color += get_in_scattering(curren_position) * atenuation * u_step_length; 
+        vec3 scattering_color = get_in_scattering(curren_position);
+        float scattering_coef = u_absortion_coef;
+        pixel_color+=scattering_color*current_absortion*scattering_coef*u_step_length*atenuation; 
+        //pixel_color +=  get_in_scattering(curren_position)* atenuation * u_step_length; //aqui fa el quadrat sencer
 
         float increase_opt = u_step_length * current_absortion; 
         optical_thickness += increase_opt; 
@@ -151,7 +154,8 @@ vec3 get_in_scattering(vec3 origin_pos) {
 
         vec3 shadow_ray = normalize(u_light_pos_local[l] - origin_pos); 
         vec2 intersect = intersectAABB(origin_pos, shadow_ray, u_box_min, u_box_max); 
-        float final = max(intersect.x, intersect.y); 
+        //float final = max(intersect.x, intersect.y); 
+        float final = intersect.y; 
         float step_length = final / float(u_num_scattering_steps); 
         float optical_thickness = 0.0f; 
 
@@ -161,10 +165,12 @@ vec3 get_in_scattering(vec3 origin_pos) {
             float current_absortion = get_density(current_pos);
             optical_thickness += current_absortion; 
         }
-
         //optical_thickness = 1.0/(optical_thickness * step_length + 0.0001); 
         optical_thickness = optical_thickness * step_length; 
-        vec3 current_pixel_col = u_light_color[l] * u_light_intensity[l] * exp(-optical_thickness * u_absortion_coef); 
+
+       vec3 current_pixel_col = u_light_color[l] * u_light_intensity[l] * exp(-optical_thickness * u_absortion_coef); 
+        //float attenuation = exp(-optical_thickness*u_absortion_coef);
+       // vec3 current_pixel_col = u_light_color[l] * u_light_intensity[l] * attenuation; 
         ret += current_pixel_col; 
     }
 
