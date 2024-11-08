@@ -98,7 +98,7 @@ void main() {
         
         pixel_color += u_color.xyz * current_absortion * exp(-optical_thickness * u_absortion_coef) * u_step_length; 
 
-        pixel_color += get_in_scattering(curren_position).xyz; 
+        //pixel_color += get_in_scattering(curren_position).xyz; 
 
         float increase_opt = u_step_length * current_absortion; 
         optical_thickness += increase_opt; 
