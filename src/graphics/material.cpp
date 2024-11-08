@@ -178,7 +178,10 @@ VolumeMaterial::VolumeMaterial(glm::vec4 color) {
 	this->density_mode = Bunny;
 
 	this->absortion_coefitient = 0.9f; 
-	step_length = 0.05f;
+	this->step_length = 0.05f;
+	this->scale = 2.209f;
+	this->detail = 5.0f;
+	this->num_scatter_steps = 3;
 
 }
 
@@ -228,8 +231,7 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	
 	// FOR LOOP FOR LIGHT SOURCES
 	//es queda sempre l'ultim valor
-	float intensity = 1.111f;
-	int num_iters; 
+	int num_iters; // min of MAX_LIGHT and the actual number of lights
 	if (MAX_LIGHT < Application::instance->light_list.size()) {
 		num_iters = MAX_LIGHT; 
 	}
@@ -255,9 +257,9 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 		light_color[l * 3 + 1]	= current_light->color[1];
 		light_color[l * 3 + 2]	= current_light->color[2];
 
-		light_color[l * 3]		= light_pos_local[0];
-		light_color[l * 3 + 1]	= light_pos_local[1];
-		light_color[l * 3 + 2]	= light_pos_local[2];
+		light_position_loc[l * 3]		= light_pos_local[0];
+		light_position_loc[l * 3 + 1]	= light_pos_local[1];
+		light_position_loc[l * 3 + 2]	= light_pos_local[2];
 
 	}
 
@@ -267,7 +269,7 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform3Array("u_light_position", light_position_loc, num_iters);
 
 
-	this->shader->setUniform("u_num_scattering_steps", 2);
+	this->shader->setUniform("u_num_scattering_steps", num_scatter_steps);
 
 
 }
@@ -317,6 +319,7 @@ void VolumeMaterial::renderInMenu()
 	ImGui::SliderFloat("Step length", &this->step_length, 0.004f, 1.0f);
 	ImGui::SliderFloat("Scale"		, &this->scale		, 0.001f, 4.5f);
 	ImGui::SliderFloat("Detail"		, &this->detail		, 0.001f, 8.0f);
+	ImGui::DragInt("Num Scatter Steps", &this->num_scatter_steps, 0.005f, 0, 10); 
 
 	ImGui::Combo("Density mode"		, (int*)&this->density_mode, "Homogeneus\0Noise\0Bunny\0"); 
 

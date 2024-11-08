@@ -48,7 +48,7 @@ out vec4 FragColor;
 vec2 intersectAABB(vec3 rayOrigin, vec3 rayDir, vec3 boxMin, vec3 boxMax); 
 vec3 world_to_local(vec3 world, mat4 model); 
 
-float get_density(int source, vec3 curren_position_local); 
+float get_density(vec3 curren_position_local); 
 
 vec3 get_in_scattering(vec3 current_pos); 
 
@@ -94,7 +94,7 @@ void main() {
 
         vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; 
         //float current_absortion = cnoise(curren_position, u_scale, u_detail);
-        float current_absortion = get_density(u_source_density, curren_position);
+        float current_absortion = get_density(curren_position);
         
         pixel_color += u_color.xyz * current_absortion * exp(-optical_thickness * u_absortion_coef) * u_step_length; 
 
@@ -152,8 +152,8 @@ vec3 get_in_scattering(vec3 origin_pos) {
         float optical_thickness = 0.0f; 
 
         for(int i = 0; i < u_num_scattering_steps; i++) {
-            vec3 current_pos = origin_pos + shadow_ray * step_length; 
-            float current_absortion = get_density(u_source_density, current_pos);
+            vec3 current_pos = origin_pos + shadow_ray * step_length * i; 
+            float current_absortion = get_density(current_pos);
             optical_thickness += current_absortion; 
             
         }
@@ -166,6 +166,35 @@ vec3 get_in_scattering(vec3 origin_pos) {
     return ret; 
 }
 
+
+
+float get_density(vec3 curren_position_local) {
+    float ret = 1.0f; 
+    switch (u_source_density) {
+        case 1: 
+        //random
+        ret = cnoise(curren_position_local, u_scale, u_detail); 
+        break; 
+        case 2:
+         //bunny
+
+         // tex -> local : uv * 2 - 1
+         // local -> tex : loc + 1 / 2
+
+         vec3 curren_position_texture = (curren_position_local + 1.0f) * 0.5f;
+         ret = texture3D(u_texture, curren_position_texture).x; 
+        break; 
+
+        default: 
+        // also case = 0
+        // ret = 1.0f; 
+        break; 
+        
+    }
+
+    return ret; 
+
+}
 
 
 // NOISE FUNCTIONS ///////////////////////////////////////////////////////
@@ -229,32 +258,4 @@ float cnoise( vec3 P, float scale, float detail )
 {
     P *= scale;
     return clamp(fractal_noise(P, detail), 0.0, 1.0);
-}
-
-float get_density(int source, vec3 curren_position_local) {
-    float ret = 1.0f; 
-    switch (source) {
-        case 1: 
-        //random
-        ret = cnoise(curren_position_local, u_scale, u_detail); 
-        break; 
-        case 2:
-         //bunny
-
-         // tex -> local : uv * 2 - 1
-         // local -> tex : loc + 1 / 2
-
-         vec3 curren_position_texture = (curren_position_local + 1.0f) * 0.5f;
-         ret = texture3D(u_texture, curren_position_texture).x; 
-        break; 
-
-        default: 
-        // also case = 0
-        // ret = 1.0f; 
-        break; 
-        
-    }
-
-    return ret; 
-
 }

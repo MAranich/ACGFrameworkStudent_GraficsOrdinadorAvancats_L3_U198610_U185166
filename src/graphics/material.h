@@ -80,6 +80,7 @@ class VolumeMaterial : public Material {
 		float step_length = 0.05f; 
 		float scale = 2.209f;
 		float detail = 5.0f;
+		int num_scatter_steps = 3;
 
 		void setUniforms(Camera* camera, glm::mat4 model);
 		void render(Mesh* mesh, glm::mat4 model, Camera* camera);
