@@ -26,7 +26,7 @@ uniform sampler3D u_texture;
 
 uniform int u_num_lights; // invariant: 0 <= u_num_lights <= MAX_LIGHT
 uniform float u_light_intensity[MAX_LIGHT]; 
-uniform vec4 u_light_color[MAX_LIGHT]; 
+uniform vec3 u_light_color[MAX_LIGHT]; 
 //uniform vec3 u_light_pos[MAX_LIGHT]; 
 uniform vec3 u_light_pos_local[MAX_LIGHT]; 
 
@@ -50,7 +50,7 @@ vec3 world_to_local(vec3 world, mat4 model);
 
 float get_density(int source, vec3 curren_position_local); 
 
-vec4 get_in_scattering(vec3 current_pos); 
+vec3 get_in_scattering(vec3 current_pos); 
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -98,7 +98,7 @@ void main() {
         
         pixel_color += u_color.xyz * current_absortion * exp(-optical_thickness * u_absortion_coef) * u_step_length; 
 
-        //pixel_color += get_in_scattering(curren_position).xyz; 
+        pixel_color += get_in_scattering(curren_position); 
 
         float increase_opt = u_step_length * current_absortion; 
         optical_thickness += increase_opt; 
@@ -139,16 +139,16 @@ vec3 world_to_local(vec3 world, mat4 model) {
     return inv_w * tmp.xyz; 
 }
 
-vec4 get_in_scattering(vec3 origin_pos) {
+vec3 get_in_scattering(vec3 origin_pos) {
     // origin_pos is local coords
 
-    vec4 ret = vec4(0, 0, 0, 1.0); 
+    vec3 ret = vec3(0, 0, 0); 
 
     for(int l = 0; l < u_num_lights; l++) {
         vec3 shadow_ray = normalize(u_light_pos_local[l] - origin_pos); 
         vec2 intersect = intersectAABB(origin_pos, shadow_ray, u_box_min, u_box_max); 
         float final = max(intersect.x, intersect.y); 
-        float step_length = final / u_num_scattering_steps; 
+        float step_length = final / float(u_num_scattering_steps); 
         float optical_thickness = 0.0f; 
 
         for(int i = 0; i < u_num_scattering_steps; i++) {
@@ -159,7 +159,7 @@ vec4 get_in_scattering(vec3 origin_pos) {
         }
 
         optical_thickness = optical_thickness * step_length; 
-        vec4 current_pixel_col = u_light_color[l] * u_light_intensity[l] * exp(-optical_thickness * u_absortion_coef); 
+        vec3 current_pixel_col = u_light_color[l] * u_light_intensity[l] * exp(-optical_thickness * u_absortion_coef); 
         ret += current_pixel_col; 
     }
 

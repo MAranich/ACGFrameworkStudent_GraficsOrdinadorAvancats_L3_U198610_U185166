@@ -267,7 +267,7 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform3Array("u_light_position", light_position_loc, num_iters);
 
 
-	this->shader->setUniform("u_num_scattering_steps", 5);
+	this->shader->setUniform("u_num_scattering_steps", 2);
 
 
 }
