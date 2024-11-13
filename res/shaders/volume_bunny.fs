@@ -18,6 +18,7 @@ uniform vec4 u_color;
 uniform vec3 u_box_min; 
 uniform vec3 u_box_max; 
 uniform float u_absortion_coef; 
+uniform float u_scattering_coef; 
 uniform float u_step_length; 
 uniform float u_scale;
 uniform float u_detail;
@@ -64,7 +65,10 @@ float cnoise( vec3 P, float scale, float detail );
 
 
 void main() {
+
+    // FragColor = vec4(u_light_pos_local[0], 1.0f); 
     
+
 
     vec3 pos = world_to_local(v_world_position, u_model); 
     vec3 ray_dir = pos - u_local_camera_position; 
@@ -84,30 +88,29 @@ void main() {
 	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
 	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
 	float num_step = 0; 
-	float threshold_exp = 13.0; 
 	float optical_thickness = 0; 
     vec3 pixel_color = vec3(0, 0, 0); 
 
 
-	while( (num_step + 0.5) * u_step_length < inner_dist && 
-			u_absortion_coef * optical_thickness < threshold_exp ) {
+	while((num_step + 0.5) * u_step_length < inner_dist) {
 
         vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; 
         //float current_absortion = cnoise(curren_position, u_scale, u_detail);
-        float current_absortion = get_density(curren_position);
+        // get_density() is the absortion
+        float current_absortion = get_density(curren_position); 
+        float transformed_absortion = current_absortion * u_absortion_coef; 
+
+        optical_thickness += u_step_length * transformed_absortion; 
+
         float atenuation = exp(-optical_thickness * u_absortion_coef); 
         
         // emission
-        pixel_color += u_color.xyz * current_absortion * atenuation * u_step_length; 
+        pixel_color += u_color.xyz * transformed_absortion * atenuation * u_step_length; 
+
 
         // in-scattering
-        vec3 scattering_color = get_in_scattering(curren_position);
-        float scattering_coef = u_absortion_coef;
-        pixel_color+=scattering_color*current_absortion*scattering_coef*u_step_length*atenuation; 
-        //pixel_color +=  get_in_scattering(curren_position)* atenuation * u_step_length; //aqui fa el quadrat sencer
-
-        float increase_opt = u_step_length * current_absortion; 
-        optical_thickness += increase_opt; 
+        vec3 scattering_color = get_in_scattering(curren_position) * u_scattering_coef;
+        pixel_color += scattering_color * atenuation * current_absortion * u_step_length; 
 
         num_step += 1.0; 
 	}
@@ -118,6 +121,8 @@ void main() {
     vec4 ret = vec4(pixel_color, 1.0 - transmitansse); 
 
     FragColor = ret; 
+
+    // TODO: remove blending, use bg_color
     
 }
 
@@ -149,6 +154,7 @@ vec3 get_in_scattering(vec3 origin_pos) {
     // origin_pos is local coords
 
     vec3 ret = vec3(0, 0, 0); 
+    float inv_num_scattering_steps = 1.0f / float(u_num_scattering_steps); 
 
     for(int l = 0; l < u_num_lights; l++) {
 
@@ -156,21 +162,20 @@ vec3 get_in_scattering(vec3 origin_pos) {
         vec2 intersect = intersectAABB(origin_pos, shadow_ray, u_box_min, u_box_max); 
         //float final = max(intersect.x, intersect.y); 
         float final = intersect.y; 
-        float step_length = final / float(u_num_scattering_steps); 
+        float step_length = final * inv_num_scattering_steps; 
         float optical_thickness = 0.0f; 
 
         for(int i = 0; i < u_num_scattering_steps; i++) {
 
             vec3 current_pos = origin_pos + shadow_ray * step_length * i; 
-            float current_absortion = get_density(current_pos);
-            optical_thickness += current_absortion; 
+            float transformed_absortion = get_density(current_pos) * u_absortion_coef;
+            optical_thickness += transformed_absortion * step_length; 
         }
-        //optical_thickness = 1.0/(optical_thickness * step_length + 0.0001); 
-        optical_thickness = optical_thickness * step_length; 
 
-       vec3 current_pixel_col = u_light_color[l] * u_light_intensity[l] * exp(-optical_thickness * u_absortion_coef); 
+        float transmittance = exp(-optical_thickness); 
+        vec3 current_pixel_col = u_light_color[l] * u_light_intensity[l] * transmittance; 
         //float attenuation = exp(-optical_thickness*u_absortion_coef);
-       // vec3 current_pixel_col = u_light_color[l] * u_light_intensity[l] * attenuation; 
+        // vec3 current_pixel_col = u_light_color[l] * u_light_intensity[l] * attenuation; 
         ret += current_pixel_col; 
     }
 
@@ -182,11 +187,12 @@ vec3 get_in_scattering(vec3 origin_pos) {
 float get_density(vec3 curren_position_local) {
     float ret = 1.0f; 
     switch (u_source_density) {
-        case 1: 
+        //case 0: ret = 1.0f; 
+    case 1:
         //random
         ret = cnoise(curren_position_local, u_scale, u_detail); 
         break; 
-        case 2:
+    case 2:
          //bunny
 
          // tex -> local : uv * 2 - 1
@@ -194,9 +200,9 @@ float get_density(vec3 curren_position_local) {
 
          vec3 curren_position_texture = (curren_position_local + 1.0f) * 0.5f;
          ret = texture3D(u_texture, curren_position_texture).x; 
-        break; 
+         break; 
 
-        default: 
+    default: 
         // also case = 0
         // ret = 1.0f; 
         break; 
@@ -244,7 +250,6 @@ float noise( vec3 x )
 
     return -1.0+2.0*(k0 + k1*u.x + k2*u.y + k3*u.z + k4*u.x*u.y + k5*u.y*u.z + k6*u.z*u.x + k7*u.x*u.y*u.z);
 }
-
 
 float fractal_noise( vec3 P, float detail )
 {

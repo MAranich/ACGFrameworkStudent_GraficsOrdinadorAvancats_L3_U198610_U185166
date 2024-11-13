@@ -73,7 +73,8 @@ class VolumeMaterial : public Material {
 		~VolumeMaterial();
 		VolumeMaterial(glm::vec4 color);
 
-		float absortion_coefitient; 
+		float absortion_coefitient;
+		float scattering_coefitient;
 		VolumeDensityMode density_mode; 
 
 		std::vector<Shader*> shader_list;

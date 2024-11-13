@@ -177,7 +177,8 @@ VolumeMaterial::VolumeMaterial(glm::vec4 color) {
 
 	this->density_mode = Bunny;
 
-	this->absortion_coefitient = 0.9f; 
+	this->absortion_coefitient = 0.9f;
+	this->scattering_coefitient = 0.5f;
 	this->step_length = 0.05f;
 	this->scale = 2.209f;
 	this->detail = 5.0f;
@@ -215,6 +216,7 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 
 
 	this->shader->setUniform("u_absortion_coef", absortion_coefitient);
+	this->shader->setUniform("u_scattering_coef", scattering_coefitient);
 	this->shader->setUniform("u_step_length", step_length);
 	this->shader->setUniform("u_scale", scale);
 	this->shader->setUniform("u_detail", detail);
@@ -241,16 +243,17 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	for (int l = 0; l < num_iters; l++) {
 		Light* current_light = Application::instance->light_list[l]; 
 
-		glm::vec4 light_pos = current_light->model * glm::vec4(0, 0, 0, 1.0f); 
-		light_pos.w = 1.0f; 
-		light_pos = inv_model * light_pos;
-		glm::vec3 light_pos_local = (1.0f / light_pos.w) * glm::vec3(light_pos.x, light_pos.y, light_pos.z);
-
 		light_intensities[l]	= current_light->intensity;
 
 		light_color[l * 3]		= current_light->color[0];
 		light_color[l * 3 + 1]	= current_light->color[1];
 		light_color[l * 3 + 2]	= current_light->color[2];
+
+		glm::vec4 light_pos = current_light->model * glm::vec4(0, 0, 0, 1.0f); 
+		light_pos.w = 1.0f; 
+		light_pos = inv_model * light_pos;
+		glm::vec3 light_pos_local = (1.0f / light_pos.w) * glm::vec3(light_pos.x, light_pos.y, light_pos.z);
+		//printf("%f %f %f || ", light_pos_local.x, light_pos_local.y, light_pos_local.z);
 
 		light_position_loc[l * 3]		= light_pos_local[0];
 		light_position_loc[l * 3 + 1]	= light_pos_local[1];
@@ -261,7 +264,7 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_num_lights", num_iters);
 	this->shader->setUniform1Array("u_light_intensity", light_intensities, num_iters);
 	this->shader->setUniform3Array("u_light_color", light_color, num_iters);
-	this->shader->setUniform3Array("u_light_position", light_position_loc, num_iters);
+	this->shader->setUniform3Array("u_light_pos_local", light_position_loc, num_iters);
 
 
 	this->shader->setUniform("u_num_scattering_steps", num_scatter_steps);
@@ -311,10 +314,11 @@ void VolumeMaterial::renderInMenu()
 
 	ImGui::ColorEdit3("Color"		, (float*)&this->color);
 	ImGui::SliderFloat("Absortion coefitient"	, &this->absortion_coefitient, 0.0f, 4.0f);
+	ImGui::SliderFloat("Scattering coefitient"	, &this->scattering_coefitient, 0.0f, 4.0f);
 	ImGui::SliderFloat("Step length", &this->step_length, 0.004f, 1.0f);
 	ImGui::SliderFloat("Scale"		, &this->scale		, 0.001f, 4.5f);
 	ImGui::SliderFloat("Detail"		, &this->detail		, 0.001f, 8.0f);
-	ImGui::DragInt("Num Scatter Steps", &this->num_scatter_steps, 0.01f, 0, 10); 
+	ImGui::DragInt("Num Scatter Steps", &this->num_scatter_steps, 0.03f, 0, 10); 
 
 	ImGui::Combo("Density mode"		, (int*)&this->density_mode, "Homogeneus\0Noise\0Bunny\0"); 
 

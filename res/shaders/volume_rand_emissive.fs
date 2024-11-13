@@ -59,13 +59,11 @@ void main() {
 	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
 	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
 	float num_step = 0; 
-	float threshold_exp = 13.0; 
 	float optical_thickness = 0; 
     vec3 pixel_color = vec3(0, 0, 0); 
 
 
-	while( (num_step + 0.5) * u_step_length < inner_dist && 
-			u_absortion_coef * optical_thickness < threshold_exp ) {
+	while( (num_step + 0.5) * u_step_length < inner_dist) {
 
         vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; 
         float current_absortion = cnoise(curren_position,u_scale, u_detail);
@@ -81,7 +79,8 @@ void main() {
 	optical_thickness = optical_thickness * u_absortion_coef; 
     float transmitansse = exp(-optical_thickness); 
 
-    vec4 ret = vec4(pixel_color, 1.0 - transmitansse); 
+    vec4 ret = vec4(u_bg_color * transmitansse + pixel_color, 1.0); 
+    //vec4 ret = vec4(pixel_color, 1.0 - transmitansse); 
 
     FragColor = ret; 
     
