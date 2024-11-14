@@ -9,7 +9,7 @@ in vec3 v_position;
 in vec3 v_world_position;
 in vec2 v_uv;
 in vec4 v_color;
-
+// Uniforms
 uniform mat4 u_model;
 uniform mat4 u_viewprojection;
 uniform vec3 u_camera_pos; 
@@ -24,7 +24,7 @@ uniform float u_scale;
 uniform float u_detail;
 uniform int u_source_density; 
 uniform sampler3D u_texture; 
-
+//Light
 uniform int u_num_lights; // invariant: 0 <= u_num_lights <= MAX_LIGHT
 uniform float u_light_intensity[MAX_LIGHT]; 
 uniform vec3 u_light_color[MAX_LIGHT]; 
@@ -53,8 +53,6 @@ float get_density(vec3 curren_position_local);
 
 vec3 get_in_scattering(vec3 current_pos); 
 
-
-//////////////////////////////////////////////////////////////////////////////////////////
 #define MAX_OCTAVES 16
 
 float hash1( float n ); 
@@ -67,8 +65,6 @@ float cnoise( vec3 P, float scale, float detail );
 void main() {
 
     // FragColor = vec4(u_light_pos_local[0], 1.0f); 
-    
-
 
     vec3 pos = world_to_local(v_world_position, u_model); 
     vec3 ray_dir = pos - u_local_camera_position; 
@@ -86,7 +82,7 @@ void main() {
     }
 
 	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
-	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
+	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); //Ray equation, integration
 	float num_step = 0; 
 	float optical_thickness = 0; 
     vec3 pixel_color = vec3(0, 0, 0); 
@@ -96,28 +92,34 @@ void main() {
 
         vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; 
         //float current_absortion = cnoise(curren_position, u_scale, u_detail);
-        // get_density() is the absortion
-        float current_absortion = get_density(curren_position); 
-        float transformed_absortion = current_absortion * u_absortion_coef; 
+        float current_absortion = get_density(curren_position); // get_density() is the cnoise or texture3D, or 1 (case homogeneous)
+        float transformed_absortion = current_absortion * u_absortion_coef;  //we multiply the density by the absorption coefficient
 
-        optical_thickness += u_step_length * transformed_absortion; 
+        optical_thickness += u_step_length * transformed_absortion; //Riemann sum for heterogeneous
 
-        float atenuation = exp(-optical_thickness * u_absortion_coef); 
-        
-        // emission
+        //float atenuation = exp(-optical_thickness * u_absortion_coef);  //Transmittance (estavem multiplicant 2 vegades per u_abs_coef)
+        float atenuation = exp(-optical_thickness); //Transimittance (T(t',t))
+
+        // EMISSION TERM (Multiplied by the attenuation of the light and the step_length for integration)
         pixel_color += u_color.xyz * transformed_absortion * atenuation * u_step_length; 
 
 
-        // in-scattering
-        vec3 scattering_color = get_in_scattering(curren_position) * u_scattering_coef;
-        pixel_color += scattering_color * atenuation * current_absortion * u_step_length; 
+        // IN-SCATTERING TERM
+        vec3 scattering_color = get_in_scattering(curren_position);
+        float transformed_absorption_scat = current_absortion *  u_scattering_coef;
+        //pixel_color += scattering_color * transformed_absorption_scat * atenuation * u_step_length; 
+        //la attenuation ja esta calculada a dins de get_in_scattering
+        pixel_color += scattering_color * transformed_absorption_scat * u_step_length; 
 
         num_step += 1.0; 
 	}
 	
-	optical_thickness = optical_thickness * u_absortion_coef; 
+    // Use the optical thickness accumulated computed to compute the Transmittance
+	//optical_thickness = optical_thickness * u_absortion_coef; 
+    optical_thickness = optical_thickness;
     float transmitansse = exp(-optical_thickness); 
-
+    
+    //ret: the final L(t)
     vec4 ret = vec4(pixel_color, 1.0 - transmitansse); 
 
     FragColor = ret; 
@@ -162,7 +164,7 @@ vec3 get_in_scattering(vec3 origin_pos) {
         vec2 intersect = intersectAABB(origin_pos, shadow_ray, u_box_min, u_box_max); 
         //float final = max(intersect.x, intersect.y); 
         float final = intersect.y; 
-        float step_length = final * inv_num_scattering_steps; 
+        float step_length = final * inv_num_scattering_steps;  //we divide final.y by the number of steps inside
         float optical_thickness = 0.0f; 
 
         for(int i = 0; i < u_num_scattering_steps; i++) {
