@@ -47,4 +47,7 @@ public:
 	void onMiddleMouseUp();
 	void onMousePosition(double xpos, double ypos);
 	void onScroll(double xOffset, double yOffset);
+
+	float speed = 0.1f;
+
 };

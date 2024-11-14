@@ -38,6 +38,9 @@ void Application::init(GLFWwindow* window)
     this->light_list.push_back(sun);
     this->node_list.push_back(sun);
 
+    this->speed = 0.1f;
+
+
 }
 
 void Application::update(float dt)
@@ -49,11 +52,31 @@ void Application::update(float dt)
     }
     this->lastMousePosition = this->mousePosition;
 
-    float bad_oscilator = sin(bad_time * (2.0*355.0f/113.0f) / 10.0); 
-    //printf("%f  %f \n", light_list[0]->model[0], bad_time);
+    float time_mult = (2.0 * 355.0f / 113.0f); 
+    //ImGui::SliderFloat("Light rotation speed", &this->speed, -1.0f, 1.0);
 
     float framerate = 60.0f; //fps
-    bad_time += 1.0f / framerate; 
+    bad_time += 1.0f / framerate;
+
+    if (abs(this->speed) < 0.004f) {
+        return; 
+    }
+
+    time_mult = time_mult * this->speed;
+
+    float x_org = 1.5f;
+    float z_org = -1.5f;
+    float c = cos(bad_time * time_mult);
+    float s = sin(bad_time * time_mult);
+
+    float new_x = x_org * c - z_org * s;
+    float new_z = z_org * c + x_org * s;
+
+    light_list[0]->model[3][0] = new_x;
+    light_list[0]->model[3][2] = new_z;
+
+
+
 }
 
 void Application::render()
@@ -102,6 +125,9 @@ void Application::renderGUI()
                 ImGui::TreePop();
             }
         }
+        //ImGui::SliderFloat("Light rotation speed", &this->speed, -1.0f, 1.0);
+        ImGui::DragFloat("Light rotation speed", &this->speed, 0.02f, -1.0f, 1.0);
+
         ImGui::TreePop();
     }
 }
