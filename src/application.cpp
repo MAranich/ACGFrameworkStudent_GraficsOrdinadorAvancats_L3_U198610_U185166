@@ -21,6 +21,7 @@ void Application::init(GLFWwindow* window)
     this->flag_wireframe = false;
 
     this->ambient_light = glm::vec4(0.75f, 0.75f, 0.75f, 1.f);
+    bad_time = 0.0f; 
 
     /* ADD NODES TO THE SCENE */
     SceneNode* example = new SceneNode();
@@ -33,7 +34,7 @@ void Application::init(GLFWwindow* window)
     //this->background_color = glm::vec3(219.0f / 255.0f, 237.0f / 255.0f, 242.0f / 255.0f);
     this->background_color = glm::vec3(0.1f, 0.1f, 0.1f);
 
-    Light* sun = new Light(glm::vec3(1.5f, 1.5f, -1.5f), LIGHT_POINT, 1.11111f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    Light* sun = new Light(glm::vec3(1.5f, 1.5f, -1.5f), LIGHT_POINT, 6.6666f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
     this->light_list.push_back(sun);
     this->node_list.push_back(sun);
 
@@ -47,6 +48,12 @@ void Application::update(float dt)
         this->camera->orbit(-delta.x * dt, delta.y * dt);
     }
     this->lastMousePosition = this->mousePosition;
+
+    float bad_oscilator = sin(bad_time * (2.0*355.0f/113.0f) / 10.0); 
+    //printf("%f  %f \n", light_list[0]->model[0], bad_time);
+
+    float framerate = 60.0f; //fps
+    bad_time += 1.0f / framerate; 
 }
 
 void Application::render()

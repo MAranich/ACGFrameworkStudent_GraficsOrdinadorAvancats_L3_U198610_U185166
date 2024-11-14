@@ -24,6 +24,8 @@ public:
 	bool flag_grid;
 	bool flag_wireframe;
 
+	float bad_time; 
+
 	bool close = false;
 	bool dragging;
 	glm::vec2 mousePosition;
