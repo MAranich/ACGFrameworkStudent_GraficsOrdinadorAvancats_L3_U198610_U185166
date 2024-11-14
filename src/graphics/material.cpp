@@ -184,6 +184,9 @@ VolumeMaterial::VolumeMaterial(glm::vec4 color) {
 	this->detail = 5.0f;
 	this->num_scatter_steps = 5;
 
+	this->phase_function = Isotropic; 
+	this->g_coef = 0.5f; 
+
 }
 
 void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
@@ -269,6 +272,11 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 
 	this->shader->setUniform("u_num_scattering_steps", num_scatter_steps);
 
+	// PHASE FUNCTION
+
+	this->shader->setUniform("u_phase_fn", (int)this->phase_function);
+	this->shader->setUniform("u_g", g_coef);
+
 
 }
 
@@ -318,9 +326,10 @@ void VolumeMaterial::renderInMenu()
 	ImGui::SliderFloat("Step length", &this->step_length, 0.004f, 1.0f);
 	ImGui::SliderFloat("Scale"		, &this->scale		, 0.001f, 4.5f);
 	ImGui::SliderFloat("Detail"		, &this->detail		, 0.001f, 8.0f);
-	ImGui::DragInt("Num Scatter Steps", &this->num_scatter_steps, 0.03f, 0, 10); 
+	ImGui::DragInt("Num Scatter Steps", &this->num_scatter_steps, 0.03f, 0, 20); 
 
-	ImGui::Combo("Density mode"		, (int*)&this->density_mode, "Homogeneus\0Noise\0Bunny\0"); 
+	ImGui::Combo("Density mode"		, (int*)&this->phase_function, "Isotropic\0Henyey Greenstein\0"); 
+	ImGui::SliderFloat("g coefitient", &this->g_coef, -1.0f, 1.0f);
 
 }
 

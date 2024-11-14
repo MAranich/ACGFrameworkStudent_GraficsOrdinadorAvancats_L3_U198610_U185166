@@ -2,6 +2,7 @@
 //#version 130 core
 
 #define PI 3.14159265358979323846
+#define HEMISPHERICAL_NORM_CONSTANT 1.0/(4.0 * PI)
 #define MAX_LIGHT 8
 
 in vec3 v_normal;
@@ -15,6 +16,7 @@ uniform mat4 u_viewprojection;
 uniform vec3 u_camera_pos; 
 uniform vec3 u_local_camera_position; 
 uniform vec4 u_color; 
+uniform vec3 u_bg_color; 
 uniform vec3 u_box_min; 
 uniform vec3 u_box_max; 
 uniform float u_absortion_coef; 
@@ -32,6 +34,8 @@ uniform vec3 u_light_color[MAX_LIGHT];
 uniform vec3 u_light_pos_local[MAX_LIGHT]; 
 
 uniform int u_num_scattering_steps; 
+uniform int u_phase_fn; 
+uniform float u_g; 
 
 /*
     u_source_density
@@ -52,6 +56,8 @@ vec3 world_to_local(vec3 world, mat4 model);
 float get_density(vec3 curren_position_local); 
 
 vec3 get_in_scattering(vec3 current_pos); 
+float phase_function(float theta); 
+
 
 #define MAX_OCTAVES 16
 
@@ -60,14 +66,16 @@ float noise( vec3 x );
 float fractal_noise( vec3 P, float detail ); 
 float cnoise( vec3 P, float scale, float detail ); 
 
+////////////
 
+vec3 ray_dir; 
 
 void main() {
 
     // FragColor = vec4(u_light_pos_local[0], 1.0f); 
 
     vec3 pos = world_to_local(v_world_position, u_model); 
-    vec3 ray_dir = pos - u_local_camera_position; 
+    ray_dir = pos - u_local_camera_position; 
     ray_dir = normalize(ray_dir); 
 
     vec2 int_dist = intersectAABB(u_local_camera_position, ray_dir, u_box_min, u_box_max); 
@@ -91,14 +99,18 @@ void main() {
 	while((num_step + 0.5) * u_step_length < inner_dist) {
 
         vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; 
-        //float current_absortion = cnoise(curren_position, u_scale, u_detail);
-        float current_absortion = get_density(curren_position); // get_density() is the cnoise or texture3D, or 1 (case homogeneous)
-        float transformed_absortion = current_absortion * u_absortion_coef;  //we multiply the density by the absorption coefficient
+        
+        // get_density() is the cnoise or texture3D, or 1 (case homogeneous)
+        float current_absortion = get_density(curren_position); 
+        //we multiply the density by the absorption coefficient
+        //float transformed_absortion = current_absortion * u_absortion_coef;  
+        float transformed_absortion = current_absortion * (u_absortion_coef + u_scattering_coef);  
 
-        optical_thickness += u_step_length * transformed_absortion; //Riemann sum for heterogeneous
+        //Riemann sum for heterogeneous
+        optical_thickness += u_step_length * transformed_absortion; 
 
-        //float atenuation = exp(-optical_thickness * u_absortion_coef);  //Transmittance (estavem multiplicant 2 vegades per u_abs_coef)
-        float atenuation = exp(-optical_thickness); //Transimittance (T(t',t))
+        //Transimittance (T(t',t))
+        float atenuation = exp(-optical_thickness); 
 
         // EMISSION TERM (Multiplied by the attenuation of the light and the step_length for integration)
         pixel_color += u_color.xyz * transformed_absortion * atenuation * u_step_length; 
@@ -107,25 +119,19 @@ void main() {
         // IN-SCATTERING TERM
         vec3 scattering_color = get_in_scattering(curren_position);
         float transformed_absorption_scat = current_absortion *  u_scattering_coef;
-        //pixel_color += scattering_color * transformed_absorption_scat * atenuation * u_step_length; 
         //la attenuation ja esta calculada a dins de get_in_scattering
-        pixel_color += scattering_color * transformed_absorption_scat * u_step_length; 
+        pixel_color += scattering_color * transformed_absorption_scat * atenuation * u_step_length; 
 
         num_step += 1.0; 
 	}
 	
     // Use the optical thickness accumulated computed to compute the Transmittance
-	//optical_thickness = optical_thickness * u_absortion_coef; 
-    optical_thickness = optical_thickness;
     float transmitansse = exp(-optical_thickness); 
     
     //ret: the final L(t)
-    vec4 ret = vec4(pixel_color, 1.0 - transmitansse); 
+    vec4 ret = vec4(u_bg_color * transmitansse + pixel_color, 1.0); 
 
     FragColor = ret; 
-
-    // TODO: remove blending, use bg_color
-    
 }
 
 
@@ -164,7 +170,8 @@ vec3 get_in_scattering(vec3 origin_pos) {
         vec2 intersect = intersectAABB(origin_pos, shadow_ray, u_box_min, u_box_max); 
         //float final = max(intersect.x, intersect.y); 
         float final = intersect.y; 
-        float step_length = final * inv_num_scattering_steps;  //we divide final.y by the number of steps inside
+        //we divide final.y by the number of steps inside
+        float step_length = final * inv_num_scattering_steps;  
         float optical_thickness = 0.0f; 
 
         for(int i = 0; i < u_num_scattering_steps; i++) {
@@ -175,9 +182,12 @@ vec3 get_in_scattering(vec3 origin_pos) {
         }
 
         float transmittance = exp(-optical_thickness); 
-        vec3 current_pixel_col = u_light_color[l] * u_light_intensity[l] * transmittance; 
-        //float attenuation = exp(-optical_thickness*u_absortion_coef);
-        // vec3 current_pixel_col = u_light_color[l] * u_light_intensity[l] * attenuation; 
+        //phase_function
+        vec3 light_irradiance = u_light_color[l] * u_light_intensity[l]; 
+        float angle = acos(dot(ray_dir, shadow_ray)); 
+        vec3 in_scattered_light = phase_function(angle) * light_irradiance; 
+
+        vec3 current_pixel_col = in_scattered_light * transmittance; 
         ret += current_pixel_col; 
     }
 
@@ -212,7 +222,26 @@ float get_density(vec3 curren_position_local) {
     }
 
     return ret; 
+}
 
+float phase_function(float theta) {
+    float g = u_g; 
+    float ret = 0.0f; 
+    switch (u_phase_fn) {
+        //case 0: //isotropic
+    case 1: 
+        float cos_theta = cos(theta); 
+        float denominator = 1.0f + g * g - 2.0f * g * cos_theta; 
+        float den_3_2 = sqrt(denominator * denominator * denominator); 
+        ret = HEMISPHERICAL_NORM_CONSTANT * (1.0f - g * g) / den_3_2; 
+        break; 
+    default : 
+        //case 0 = isotropic
+        ret = HEMISPHERICAL_NORM_CONSTANT; 
+    
+    }
+
+    return ret; 
 }
 
 

@@ -15,6 +15,7 @@
 
 
 enum VolumeDensityMode { Homogeneus, Noise, Bunny };
+enum PhaseFunction { Isotropic, HenyeyGreenstein };
 
 class Material {
 public:
@@ -82,6 +83,9 @@ class VolumeMaterial : public Material {
 		float scale = 2.209f;
 		float detail = 5.0f;
 		int num_scatter_steps = 5;
+
+		PhaseFunction phase_function; 
+		float g_coef; 
 
 		void setUniforms(Camera* camera, glm::mat4 model);
 		void render(Mesh* mesh, glm::mat4 model, Camera* camera);
