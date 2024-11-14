@@ -66,7 +66,6 @@ float noise( vec3 x );
 float fractal_noise( vec3 P, float detail ); 
 float cnoise( vec3 P, float scale, float detail ); 
 
-////////////
 
 vec3 ray_dir; 
 
@@ -91,36 +90,36 @@ void main() {
 
 	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
 	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); //Ray equation, integration
+    //Variables init
 	float num_step = 0; 
 	float optical_thickness = 0; 
     vec3 pixel_color = vec3(0, 0, 0); 
 
 
-	while((num_step + 0.5) * u_step_length < inner_dist) {
+	while((num_step + 0.5) * u_step_length < inner_dist) { //while we are inside
 
-        vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; 
+        vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; //Ray equation
         
         // get_density() is the cnoise or texture3D, or 1 (case homogeneous)
         float current_absortion = get_density(curren_position); 
-        //we multiply the density by the absorption coefficient
-        //float transformed_absortion = current_absortion * u_absortion_coef;  
-        float transformed_absortion = current_absortion * (u_absortion_coef + u_scattering_coef);  
+
+        float transformed_absortion = current_absortion * (u_absortion_coef + u_scattering_coef);  // density * (ut = ua+ us)
+ 
 
         //Riemann sum for heterogeneous
-        optical_thickness += u_step_length * transformed_absortion; 
+        optical_thickness += u_step_length * transformed_absortion;  
 
         //Transimittance (T(t',t))
         float atenuation = exp(-optical_thickness); 
 
-        // EMISSION TERM (Multiplied by the attenuation of the light and the step_length for integration)
+        // ABSORPTION + OUT-SCATTERING TERM (using Le = u_color.xyz - EMISSION)
         pixel_color += u_color.xyz * transformed_absortion * atenuation * u_step_length; 
 
 
         // IN-SCATTERING TERM
         vec3 scattering_color = get_in_scattering(curren_position);
-        float transformed_absorption_scat = current_absortion *  u_scattering_coef;
-        //la attenuation ja esta calculada a dins de get_in_scattering
-        pixel_color += scattering_color * transformed_absorption_scat * atenuation * u_step_length; 
+        float transformed_absorption_scat = current_absortion *  u_scattering_coef; //us*density
+        pixel_color += scattering_color * transformed_absorption_scat * atenuation * u_step_length;  
 
         num_step += 1.0; 
 	}
@@ -158,7 +157,7 @@ vec3 world_to_local(vec3 world, mat4 model) {
     return inv_w * tmp.xyz; 
 }
 
-vec3 get_in_scattering(vec3 origin_pos) {
+vec3 get_in_scattering(vec3 origin_pos) { // we have to obtain the light from the main ray and the shadow ray 
     // origin_pos is local coords
 
     vec3 ret = vec3(0, 0, 0); 
@@ -169,25 +168,27 @@ vec3 get_in_scattering(vec3 origin_pos) {
         vec3 shadow_ray = normalize(u_light_pos_local[l] - origin_pos); 
         vec2 intersect = intersectAABB(origin_pos, shadow_ray, u_box_min, u_box_max); 
         //float final = max(intersect.x, intersect.y); 
-        float final = intersect.y; 
+        float final = intersect.y;
+
         //we divide final.y by the number of steps inside
         float step_length = final * inv_num_scattering_steps;  
+
         float optical_thickness = 0.0f; 
 
         for(int i = 0; i < u_num_scattering_steps; i++) {
 
             vec3 current_pos = origin_pos + shadow_ray * step_length * i; 
-            float transformed_absortion = get_density(current_pos) * u_absortion_coef;
-            optical_thickness += transformed_absortion * step_length; 
+            float transformed_absortion = get_density(current_pos) * u_absortion_coef;//density*ua
+            optical_thickness += transformed_absortion * step_length; // Riemann sum
         }
 
         float transmittance = exp(-optical_thickness); 
         //phase_function
         vec3 light_irradiance = u_light_color[l] * u_light_intensity[l]; 
-        float angle = acos(dot(ray_dir, shadow_ray)); 
-        vec3 in_scattered_light = phase_function(angle) * light_irradiance; 
+        float angle = acos(dot(ray_dir, shadow_ray)); // we obtain the angle between the main ray and the shadow ray
+        vec3 in_scattered_light = phase_function(angle) * light_irradiance; // we obtained the in-scattered light Ls
 
-        vec3 current_pixel_col = in_scattered_light * transmittance; 
+        vec3 current_pixel_col = in_scattered_light * transmittance; // we multiply Ls*T (transmittace)
         ret += current_pixel_col; 
     }
 
@@ -224,7 +225,7 @@ float get_density(vec3 curren_position_local) {
     return ret; 
 }
 
-float phase_function(float theta) {
+float phase_function(float theta) { 
     float g = u_g; 
     float ret = 0.0f; 
     switch (u_phase_fn) {
