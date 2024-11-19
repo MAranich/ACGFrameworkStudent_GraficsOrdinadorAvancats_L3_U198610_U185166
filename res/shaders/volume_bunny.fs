@@ -103,7 +103,8 @@ void main() {
         // get_density() is the cnoise or texture3D, or 1 (case homogeneous)
         float current_absortion = get_density(curren_position); 
 
-        float transformed_absortion = current_absortion * (u_absortion_coef + u_scattering_coef);  // density * (ut = ua+ us)
+        // density * (ut = ua+ us)
+        float transformed_absortion = current_absortion * (u_absortion_coef + u_scattering_coef);  
  
 
         //Riemann sum for heterogeneous
@@ -118,7 +119,7 @@ void main() {
 
         // IN-SCATTERING TERM
         vec3 scattering_color = get_in_scattering(curren_position);
-        float transformed_absorption_scat = current_absortion *  u_scattering_coef; //us*density
+        float transformed_absorption_scat = current_absortion * u_scattering_coef; //us*density
         pixel_color += scattering_color * transformed_absorption_scat * atenuation * u_step_length;  
 
         num_step += 1.0; 
