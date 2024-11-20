@@ -15,7 +15,7 @@
 
 
 enum VolumeDensityMode { Homogeneus, Noise, Bunny };
-enum PhaseFunction { Isotropic, HenyeyGreenstein };
+enum PhaseFunction { Isotropic, HenyeyGreenstein, Cardioid };
 
 class Material {
 public:

@@ -331,7 +331,8 @@ void VolumeMaterial::renderInMenu()
 	ImGui::SliderFloat("Scale"		, &this->scale		, 0.001f, 4.5f);
 	ImGui::SliderFloat("Detail"		, &this->detail		, 0.001f, 8.0f);
 	ImGui::DragInt("Num Scatter Steps", &this->num_scatter_steps, 0.03f, 0, 20); 
-	ImGui::Combo("Phase function"		, (int*)&this->phase_function, "Isotropic\0Henyey Greenstein\0", 2);
+
+	ImGui::Combo("Phase function", (int*)&this->phase_function, "Isotropic\0Henyey Greenstein\0Cardioid\0");
 	ImGui::SliderFloat("g coefitient", &this->g_coef, -1.0f, 1.0f);
 
 }

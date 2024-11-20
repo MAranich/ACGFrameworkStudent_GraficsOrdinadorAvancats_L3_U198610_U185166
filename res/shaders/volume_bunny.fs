@@ -67,6 +67,7 @@ float hash1( float n );
 float noise( vec3 x ); 
 float fractal_noise( vec3 P, float detail ); 
 float cnoise( vec3 P, float scale, float detail ); 
+float rand(vec2 co); 
 
 
 vec3 ray_dir; 
@@ -100,29 +101,30 @@ void main() {
 
 	while((num_step + 0.5) * u_step_length < inner_dist) { //while we are inside
 
-        vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; //Ray equation
+        //Ray equation
+        vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; 
         
         // get_density() is the cnoise or texture3D, or 1 (case homogeneous)
-        float current_absortion = get_density(curren_position); 
+        float density = get_density(curren_position); 
 
         // density * (ut = ua+ us)
-        float transformed_absortion = current_absortion * (u_absortion_coef + u_scattering_coef);  
- 
+        float extitntion_coefitient = density * (u_absortion_coef + u_scattering_coef);  
 
         //Riemann sum for heterogeneous
-        optical_thickness += u_step_length * transformed_absortion;  
+        optical_thickness += u_step_length * extitntion_coefitient;  
 
         //Transimittance (T(t',t))
         float atenuation = exp(-optical_thickness); 
 
-        // ABSORPTION + OUT-SCATTERING TERM (using Le = u_color.xyz - EMISSION)
-        pixel_color += u_color.xyz * transformed_absortion * atenuation * u_step_length; 
+        // EMISSION: ABSORPTION + OUT-SCATTERING TERM (using Le = u_color.xyz)
+        pixel_color += u_color.xyz * extitntion_coefitient * atenuation * u_step_length; 
 
 
         // IN-SCATTERING TERM
         vec3 scattering_color = get_in_scattering(curren_position);
-        float transformed_absorption_scat = current_absortion * u_scattering_coef; //us*density
-        pixel_color += scattering_color * transformed_absorption_scat * atenuation * u_step_length;  
+        //us * density
+        float scattering_coefitient = density * u_scattering_coef; 
+        pixel_color += scattering_color * scattering_coefitient * atenuation * u_step_length;  
 
         num_step += 1.0; 
 	}
@@ -170,7 +172,7 @@ vec3 get_in_scattering(vec3 origin_pos) { // we have to obtain the light from th
 
         vec3 shadow_ray = normalize(u_light_pos_local[l] - origin_pos); 
         vec2 intersect = intersectAABB(origin_pos, shadow_ray, u_box_min, u_box_max); 
-        //float final = max(intersect.x, intersect.y); 
+        
         float final = intersect.y;
 
         //we divide final.y by the number of steps inside
@@ -188,10 +190,14 @@ vec3 get_in_scattering(vec3 origin_pos) { // we have to obtain the light from th
         float transmittance = exp(-optical_thickness); 
         //phase_function
         vec3 light_irradiance = u_light_color[l] * u_light_intensity[l]; 
-        float angle = acos(dot(ray_dir, shadow_ray)); // we obtain the angle between the main ray and the shadow ray
-        vec3 in_scattered_light = phase_function(angle) * light_irradiance; // we obtained the in-scattered light Ls
+        // we obtain the angle between the main ray and the shadow ray
+        float angle = acos(dot(ray_dir, shadow_ray)); 
+        // we obtained the in-scattered light Ls
+        vec3 in_scattered_light = phase_function(angle) * light_irradiance; 
 
-        vec3 current_pixel_col = in_scattered_light * transmittance; // we multiply Ls*T (transmittace)
+        // we multiply Ls*T (transmittace)
+        vec3 current_pixel_col = in_scattered_light * transmittance; 
+
         ret += current_pixel_col; 
     }
 
@@ -234,10 +240,18 @@ float phase_function(float theta) {
     switch (u_phase_fn) {
         //case 0: //isotropic
     case 1: 
+        // Computing the Henyey Greenstein functions
         float cos_theta = cos(theta); 
+        float numerator = 1.0f - g * g; 
         float denominator = 1.0f + g * g - 2.0f * g * cos_theta; 
         float den_3_2 = sqrt(denominator * denominator * denominator); 
-        ret = HEMISPHERICAL_NORM_CONSTANT * (1.0f - g * g) / den_3_2; 
+        ret = HEMISPHERICAL_NORM_CONSTANT * numerator / den_3_2; 
+        break; 
+    case 2:
+        // our cardioid function: r = 0.5 * (1.0 - cos(theta + pi))
+        float cos_theta_2 = cos(theta + PI); 
+        ret = 1.0 - cos_theta_2; 
+        ret = ret * 0.5f; 
         break; 
     default : 
         //case 0 = isotropic
@@ -250,6 +264,10 @@ float phase_function(float theta) {
 
 
 // NOISE FUNCTIONS ///////////////////////////////////////////////////////
+
+float rand(vec2 co) {
+    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+}
 
 float hash1( float n )
 {

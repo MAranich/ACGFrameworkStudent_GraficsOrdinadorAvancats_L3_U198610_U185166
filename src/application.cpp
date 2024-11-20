@@ -132,7 +132,7 @@ void Application::renderGUI()
             }
         }
         //ImGui::SliderFloat("Light rotation speed", &this->speed, -1.0f, 1.0);
-        ImGui::DragFloat("Light rotation speed", &this->speed, 0.02f, -1.0f, 1.0);
+        ImGui::DragFloat("Light rotation speed", &this->speed, 0.002f, -1.0f, 1.0);
 
         ImGui::TreePop();
     }
