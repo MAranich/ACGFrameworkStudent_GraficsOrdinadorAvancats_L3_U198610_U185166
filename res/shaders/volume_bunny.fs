@@ -21,11 +21,13 @@ uniform vec3 u_box_min;
 uniform vec3 u_box_max; 
 uniform float u_absortion_coef; 
 uniform float u_scattering_coef; 
+uniform float u_density_plus;
 uniform float u_step_length; 
 uniform float u_scale;
 uniform float u_detail;
 uniform int u_source_density; 
 uniform sampler3D u_texture; 
+
 //Light
 uniform int u_num_lights; // invariant: 0 <= u_num_lights <= MAX_LIGHT
 uniform float u_light_intensity[MAX_LIGHT]; 
@@ -223,7 +225,7 @@ float get_density(vec3 curren_position_local) {
         
     }
 
-    return ret; 
+    return ret*u_density_plus; 
 }
 
 float phase_function(float theta) { 

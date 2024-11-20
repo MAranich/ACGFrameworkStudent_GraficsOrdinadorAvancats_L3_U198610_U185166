@@ -186,6 +186,7 @@ VolumeMaterial::VolumeMaterial(glm::vec4 color) {
 
 	this->phase_function = Isotropic; 
 	this->g_coef = 0.5f; 
+	this->density_plus = 0.3f;
 
 }
 
@@ -220,6 +221,7 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 
 	this->shader->setUniform("u_absortion_coef", absortion_coefitient);
 	this->shader->setUniform("u_scattering_coef", scattering_coefitient);
+	this->shader->setUniform("u_density_plus", density_plus);
 	this->shader->setUniform("u_step_length", step_length);
 	this->shader->setUniform("u_scale", scale);
 	this->shader->setUniform("u_detail", detail);
@@ -324,11 +326,11 @@ void VolumeMaterial::renderInMenu()
 	ImGui::Combo("Density mode", (int*)&this->density_mode, "Homogeneus\0Noise\0Bunny\0", 3);
 	ImGui::SliderFloat("Absortion coefitient"	, &this->absortion_coefitient, 0.0f, 4.0f);
 	ImGui::SliderFloat("Scattering coefitient"	, &this->scattering_coefitient, 0.0f, 4.0f);
+	ImGui::SliderFloat("Density multiplier", &this->density_plus, 0.3f, 4.0f);
 	ImGui::SliderFloat("Step length", &this->step_length, 0.004f, 1.0f);
 	ImGui::SliderFloat("Scale"		, &this->scale		, 0.001f, 4.5f);
 	ImGui::SliderFloat("Detail"		, &this->detail		, 0.001f, 8.0f);
 	ImGui::DragInt("Num Scatter Steps", &this->num_scatter_steps, 0.03f, 0, 20); 
-
 	ImGui::Combo("Phase function"		, (int*)&this->phase_function, "Isotropic\0Henyey Greenstein\0", 2);
 	ImGui::SliderFloat("g coefitient", &this->g_coef, -1.0f, 1.0f);
 

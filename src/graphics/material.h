@@ -77,6 +77,7 @@ class VolumeMaterial : public Material {
 		float absortion_coefitient;
 		float scattering_coefitient;
 		VolumeDensityMode density_mode; 
+		float density_plus;
 
 		std::vector<Shader*> shader_list;
 		float step_length = 0.05f; 
