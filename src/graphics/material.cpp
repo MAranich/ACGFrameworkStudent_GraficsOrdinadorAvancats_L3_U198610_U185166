@@ -186,7 +186,7 @@ VolumeMaterial::VolumeMaterial(glm::vec4 color) {
 
 	this->phase_function = Isotropic; 
 	this->g_coef = 0.5f; 
-	this->density_plus = 0.3f;
+	this->density_plus = 1.0f;
 
 }
 
@@ -326,7 +326,7 @@ void VolumeMaterial::renderInMenu()
 	ImGui::Combo("Density mode", (int*)&this->density_mode, "Homogeneus\0Noise\0Bunny\0", 3);
 	ImGui::SliderFloat("Absortion coefitient"	, &this->absortion_coefitient, 0.0f, 4.0f);
 	ImGui::SliderFloat("Scattering coefitient"	, &this->scattering_coefitient, 0.0f, 4.0f);
-	ImGui::SliderFloat("Density multiplier", &this->density_plus, 0.3f, 4.0f);
+	ImGui::SliderFloat("Density multiplier", &this->density_plus, 1.0f, 4.0f);
 	ImGui::SliderFloat("Step length", &this->step_length, 0.004f, 1.0f);
 	ImGui::SliderFloat("Scale"		, &this->scale		, 0.001f, 4.5f);
 	ImGui::SliderFloat("Detail"		, &this->detail		, 0.001f, 8.0f);
