@@ -32,7 +32,6 @@ uniform sampler3D u_texture;
 uniform int u_num_lights; // invariant: 0 <= u_num_lights <= MAX_LIGHT
 uniform float u_light_intensity[MAX_LIGHT]; 
 uniform vec3 u_light_color[MAX_LIGHT]; 
-//uniform vec3 u_light_pos[MAX_LIGHT]; 
 uniform vec3 u_light_pos_local[MAX_LIGHT]; 
 
 uniform int u_num_scattering_steps; 
@@ -73,17 +72,20 @@ float rand(vec2 co);
 vec3 ray_dir; 
 
 void main() {
-
-    // FragColor = vec4(u_light_pos_local[0], 1.0f); 
-
+    
+    // Converting the coordinates to Local
     vec3 pos = world_to_local(v_world_position, u_model); 
+    // Get the direction of the ray
     ray_dir = pos - u_local_camera_position; 
     ray_dir = normalize(ray_dir); 
 
+    //Finding the intersections w the auxiliary geometry
     vec2 int_dist = intersectAABB(u_local_camera_position, ray_dir, u_box_min, u_box_max); 
-
+    
+    //Definition of t near and t far 
 	float t_near = int_dist.x; 
 	float t_far = int_dist.y; 
+    //The distance inside
     float inner_dist = t_far - t_near; 
 
     if(inner_dist <= 0.0) {
@@ -92,14 +94,16 @@ void main() {
     }
 
 	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
-	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); //Ray equation, integration
+
+    //Ray equation, integration
+	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
     //Variables init
 	float num_step = 0; 
 	float optical_thickness = 0; 
     vec3 pixel_color = vec3(0, 0, 0); 
 
 
-	while((num_step + 0.5) * u_step_length < inner_dist) { //while we are inside
+	while((num_step + 0.5) * u_step_length < inner_dist) { //While we are inside
 
         //Ray equation
         vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; 
@@ -107,7 +111,7 @@ void main() {
         // get_density() is the cnoise or texture3D, or 1 (case homogeneous)
         float density = get_density(curren_position); 
 
-        // density * (ut = ua+ us)
+        // density * the extinction coefficient (ut = ua+ us)
         float extitntion_coefitient = density * (u_absortion_coef + u_scattering_coef);  
 
         //Riemann sum for heterogeneous
@@ -116,13 +120,12 @@ void main() {
         //Transimittance (T(t',t))
         float atenuation = exp(-optical_thickness); 
 
-        // EMISSION: ABSORPTION + OUT-SCATTERING TERM (using Le = u_color.xyz)
+        // ABSORPTION + OUT-SCATTERING TERM (using the emitted color Le = u_color.xyz)
         pixel_color += u_color.xyz * extitntion_coefitient * atenuation * u_step_length; 
-
 
         // IN-SCATTERING TERM
         vec3 scattering_color = get_in_scattering(curren_position);
-        //us * density
+        // Multiplication of the density by the scattering coefficient
         float scattering_coefitient = density * u_scattering_coef; 
         pixel_color += scattering_color * scattering_coefitient * atenuation * u_step_length;  
 
@@ -138,7 +141,7 @@ void main() {
     FragColor = ret; 
 }
 
-
+// DEFINITION OF FUNCTIONS ---------------------------------------------------------------
 // adapted from intersectCube in https://github.com/evanw/webgl-path-tracing/blob/master/webgl-path-tracing.js
 // compute the near and far intersections of the cube (stored in the x and y components) using the slab method
 // no intersection means vec.y - vec.x < 0 
@@ -162,37 +165,39 @@ vec3 world_to_local(vec3 world, mat4 model) {
     return inv_w * tmp.xyz; 
 }
 
-vec3 get_in_scattering(vec3 origin_pos) { // we have to obtain the light from the main ray and the shadow ray 
+vec3 get_in_scattering(vec3 origin_pos) { // We have to obtain the light from the main ray and the shadow ray 
     // origin_pos is local coords
 
-    vec3 ret = vec3(0, 0, 0); 
+    vec3 ret = vec3(0, 0, 0); //Init
     float inv_num_scattering_steps = 1.0f / float(u_num_scattering_steps); 
 
     for(int l = 0; l < u_num_lights; l++) {
 
+        // We get the direction of the shadow ray (the light-ray)
         vec3 shadow_ray = normalize(u_light_pos_local[l] - origin_pos); 
+        // We get the intersection w the auxiliary geometry
         vec2 intersect = intersectAABB(origin_pos, shadow_ray, u_box_min, u_box_max); 
         
         float final = intersect.y;
 
-        //we divide final.y by the number of steps inside
+        //we divide final.y by the number of steps inside, to get the step length
         float step_length = final * inv_num_scattering_steps;  
 
-        float optical_thickness = 0.0f; 
+        float optical_thickness = 0.0f; //Init
 
         for(int i = 0; i < u_num_scattering_steps; i++) {
 
             vec3 current_pos = origin_pos + shadow_ray * step_length * i; 
-            float transformed_absortion = get_density(current_pos) * u_absortion_coef;//density*ua
+            // We get the absorption by density*ua
+            float transformed_absortion = get_density(current_pos) * u_absortion_coef;
             optical_thickness += transformed_absortion * step_length; // Riemann sum
         }
 
         float transmittance = exp(-optical_thickness); 
-        //phase_function
         vec3 light_irradiance = u_light_color[l] * u_light_intensity[l]; 
-        // we obtain the angle between the main ray and the shadow ray
+        // We obtain the angle between the main ray and the shadow ray
         float angle = acos(dot(ray_dir, shadow_ray)); 
-        // we obtained the in-scattered light Ls
+        // We obtain the in-scattered light Ls
         vec3 in_scattered_light = phase_function(angle) * light_irradiance; 
 
         // we multiply Ls*T (transmittace)
@@ -205,12 +210,12 @@ vec3 get_in_scattering(vec3 origin_pos) { // we have to obtain the light from th
 }
 
 
-
+// Depending on the density we are using: Homogeneous, Heterogeneous (Noise), or Bunny
 float get_density(vec3 curren_position_local) {
-    float ret = 1.0f; 
+    float ret = 1.0f; //Homogeneous
     switch (u_source_density) {
         //case 0: ret = 1.0f; 
-    case 1:
+    case 1: //Heterogeneous (Noise)
         //random
         ret = cnoise(curren_position_local, u_scale, u_detail); 
         break; 
