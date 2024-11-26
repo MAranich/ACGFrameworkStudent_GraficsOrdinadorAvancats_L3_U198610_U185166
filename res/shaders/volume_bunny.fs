@@ -10,6 +10,7 @@ in vec3 v_position;
 in vec3 v_world_position;
 in vec2 v_uv;
 in vec4 v_color;
+in vec4 gl_FragCoord; 
 // Uniforms
 uniform mat4 u_model;
 uniform mat4 u_viewprojection;
@@ -93,9 +94,9 @@ void main() {
         return; 
     }
 
-	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
-
+	float jitter = u_step_length * rand(gl_FragCoord.xy); 
     //Ray equation, integration
+	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
 	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
     //Variables init
 	float num_step = 0; 
