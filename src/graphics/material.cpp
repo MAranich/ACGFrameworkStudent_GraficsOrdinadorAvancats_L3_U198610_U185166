@@ -177,16 +177,16 @@ VolumeMaterial::VolumeMaterial(glm::vec4 color) {
 
 	this->density_mode = Bunny;
 
-	this->absortion_coefitient = 0.9f;
-	this->scattering_coefitient = 0.5f;
+	this->absortion_coefitient = 2.1f;
+	this->scattering_coefitient = 2.5f;
 	this->step_length = 0.05f;
-	this->scale = 2.209f;
+	this->scale = 2.2f;
 	this->detail = 5.0f;
 	this->num_scatter_steps = 5;
 
 	this->phase_function = Isotropic; 
 	this->g_coef = 0.5f; 
-	this->density_plus = 1.0f;
+	this->density_plus = 1.3f;
 
 }
 
