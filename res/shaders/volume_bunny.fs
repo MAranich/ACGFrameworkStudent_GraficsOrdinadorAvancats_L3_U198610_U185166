@@ -97,7 +97,8 @@ void main() {
 	float jitter = u_step_length * rand(gl_FragCoord.xy); 
     //Ray equation, integration
 	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
-	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
+	//vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
+	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + jitter); 
     //Variables init
 	float num_step = 0; 
 	float optical_thickness = 0; 
@@ -112,7 +113,7 @@ void main() {
         // get_density() is the cnoise or texture3D, or 1 (case homogeneous)
         float density = get_density(curren_position); 
 
-        // density * the extinction coefficient (ut = ua+ us)
+        // density * the extinction coefficient (ut = ua + us)
         float extitntion_coefitient = density * (u_absortion_coef + u_scattering_coef);  
 
         //Riemann sum for heterogeneous
