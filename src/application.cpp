@@ -27,8 +27,14 @@ void Application::init(GLFWwindow* window)
     /* ADD NODES TO THE SCENE */
     SceneNode* example = new SceneNode();
     example->mesh = Mesh::Get("res/meshes/cube.obj");
-    example->material = new StandardMaterial();
-    example->material = new VolumeMaterial(glm::vec4(0, 13 * to_rgb, 0, 1));
+    bool use_normal_volume = false; 
+    if (use_normal_volume) {
+        example->material = new VolumeMaterial(glm::vec4(0, 13 * to_rgb, 0, 1));
+    }
+    else {
+        glm::vec4 color = to_rgb * glm::vec4(240, 60, 14, 1);
+        example->material = new IsosurfaceMaterial(color, 0.5);
+    }
 
     this->node_list.push_back(example);
 

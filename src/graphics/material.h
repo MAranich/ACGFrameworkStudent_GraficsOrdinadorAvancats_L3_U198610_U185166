@@ -97,3 +97,23 @@ class VolumeMaterial : public Material {
 		void estimate3DTexture(easyVDB::OpenVDBReader* vdbReader);
 
 };
+
+class IsosurfaceMaterial : public Material {
+	public:
+		~IsosurfaceMaterial();
+		IsosurfaceMaterial(glm::vec4 _color, float _threshold);
+
+		float threshold;
+		float step_length = 0.05f;
+
+
+		void setUniforms(Camera* camera, glm::mat4 model);
+		void render(Mesh* mesh, glm::mat4 model, Camera* camera);
+		void renderInMenu();
+
+		void loadVDB(std::string file_path);
+
+		void estimate3DTexture(easyVDB::OpenVDBReader* vdbReader);
+
+
+};

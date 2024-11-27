@@ -90,7 +90,7 @@ void main() {
     float inner_dist = t_far - t_near; 
 
     if(inner_dist <= 0.0) {
-        FragColor = vec4(0, 0, 0, 0); 
+        FragColor = vec4(u_bg_color, 1); 
         return; 
     }
 
