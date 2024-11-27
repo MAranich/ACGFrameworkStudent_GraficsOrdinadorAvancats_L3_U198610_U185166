@@ -187,6 +187,8 @@ VolumeMaterial::VolumeMaterial(glm::vec4 color) {
 	this->phase_function = Isotropic; 
 	this->g_coef = 0.5f; 
 	this->density_plus = 1.3f;
+	this->use_jittering = true;
+
 
 }
 
@@ -279,6 +281,8 @@ void VolumeMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_phase_fn", (int)this->phase_function);
 	this->shader->setUniform("u_g", g_coef);
 
+	this->shader->setUniform("u_use_jittering", this->use_jittering);
+
 
 }
 
@@ -334,6 +338,8 @@ void VolumeMaterial::renderInMenu()
 
 	ImGui::Combo("Phase function", (int*)&this->phase_function, "Isotropic\0Henyey Greenstein\0Cardioid\0");
 	ImGui::SliderFloat("g coefitient", &this->g_coef, -1.0f, 1.0f);
+
+	ImGui::Checkbox("Use jittering", &this->use_jittering);
 
 }
 
@@ -466,7 +472,6 @@ void VolumeMaterial::estimate3DTexture(easyVDB::OpenVDBReader* vdbReader)
 // Isomaterial
 
 
-
 IsosurfaceMaterial::~IsosurfaceMaterial() { }
 
 IsosurfaceMaterial::IsosurfaceMaterial(glm::vec4 _color, float _threshold) {
@@ -479,8 +484,14 @@ IsosurfaceMaterial::IsosurfaceMaterial(glm::vec4 _color, float _threshold) {
 	this->shader = Shader::Get("res/shaders/basic.vs", "res/shaders/volume_isosurface.fs");
 
 	this->threshold = _threshold; 
+	this->density_mode = Bunny; 
 
 	this->step_length = 0.05f;
+
+	this->scale = 2.209f;
+	this->detail = 5.0f;
+	this->use_jittering = true;
+
 
 }
 
@@ -516,9 +527,15 @@ void IsosurfaceMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_threshold", this->threshold);
 	this->shader->setUniform("u_step_length", step_length);
 
+	this->shader->setUniform("u_scale", scale);
+	this->shader->setUniform("u_detail", detail);
+
 
 	const unsigned int TEXTURE_SLOT = 0;
 	this->shader->setUniform("u_texture", this->texture, TEXTURE_SLOT);
+	this->shader->setUniform("u_source_density", this->density_mode);
+
+	this->shader->setUniform("u_use_jittering", this->use_jittering); 
 
 }
 
@@ -554,7 +571,13 @@ void IsosurfaceMaterial::renderInMenu()
 
 	ImGui::ColorEdit3("Color", (float*)&this->color);
 	ImGui::SliderFloat("Threshold", &this->threshold, 0.0f, 1.0f);
+	ImGui::Combo("Density mode", (int*)&this->density_mode, "Homogeneus\0Noise\0Bunny\0", 3);
 	ImGui::SliderFloat("Step length", &this->step_length, 0.004f, 1.0f);
+
+	ImGui::SliderFloat("Scale", &this->scale, 0.001f, 4.5f);
+	ImGui::SliderFloat("Detail", &this->detail, 0.001f, 8.0f);
+
+	ImGui::Checkbox("Use jittering", &this->use_jittering); 
 
 }
 

@@ -23,7 +23,20 @@ uniform float u_step_length;
 
 uniform sampler3D u_texture; 
 
+uniform int u_source_density; 
 
+/*
+    u_source_density
+
+    0: uniform
+    1: random
+    2: bunny
+*/
+
+uniform float u_scale;
+uniform float u_detail;
+
+uniform bool u_use_jittering; 
 
 out vec4 FragColor;
 
@@ -33,6 +46,14 @@ vec3 world_to_local(vec3 world, mat4 model);
 
 float get_density(vec3 curren_position_local); 
  
+#define MAX_OCTAVES 16
+
+float hash1( float n ); 
+float noise( vec3 x ); 
+float fractal_noise( vec3 P, float detail ); 
+float cnoise( vec3 P, float scale, float detail ); 
+float rand(vec2 co); 
+
 
 vec3 ray_dir; 
 
@@ -61,6 +82,10 @@ void main() {
     //Ray equation, integration
 	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
 	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
+    if(u_use_jittering) {
+        original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * rand(gl_FragCoord.xy)); 
+    } 
+    
     //Variables init
 	float num_step = 0; 
 
@@ -71,9 +96,7 @@ void main() {
         vec3 curren_position = original_pos + ray_dir * num_step * u_step_length; 
         
         // get_density() is the cnoise or texture3D, or 1 (case homogeneous)
-        // conversion to texture coord. 
-        vec3 curren_position_texture = (curren_position + 1.0f) * 0.5f;
-        float density = texture3D(u_texture, curren_position_texture).x; 
+        float density = get_density(curren_position); 
 
         if(u_threshold <= density) {
             FragColor = u_color; 
@@ -111,7 +134,7 @@ vec3 world_to_local(vec3 world, mat4 model) {
 }
 
 
-/*
+
 // Depending on the density we are using: Homogeneous, Heterogeneous (Noise), or Bunny
 float get_density(vec3 curren_position_local) {
     float ret = 1.0f; //Homogeneous
@@ -141,4 +164,69 @@ float get_density(vec3 curren_position_local) {
     return ret; 
 }
 
-*/
+
+// NOISE FUNCTIONS ///////////////////////////////////////////////////////
+
+float rand(vec2 co) {
+    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+float hash1( float n )
+{
+    return fract( n*17.0*fract( n*0.3183099 ) );
+}
+
+float noise( vec3 x )
+{
+    vec3 p = floor(x);
+    vec3 w = fract(x);
+    
+    vec3 u = w*w*w*(w*(w*6.0-15.0)+10.0);
+    
+    float n = p.x + 317.0*p.y + 157.0*p.z;
+    
+    float a = hash1(n+0.0);
+    float b = hash1(n+1.0);
+    float c = hash1(n+317.0);
+    float d = hash1(n+318.0);
+    float e = hash1(n+157.0);
+    float f = hash1(n+158.0);
+    float g = hash1(n+474.0);
+    float h = hash1(n+475.0);
+
+    float k0 =   a;
+    float k1 =   b - a;
+    float k2 =   c - a;
+    float k3 =   e - a;
+    float k4 =   a - b - c + d;
+    float k5 =   a - c - e + g;
+    float k6 =   a - b - e + f;
+    float k7 = - a + b + c - d + e - f - g + h;
+
+    return -1.0+2.0*(k0 + k1*u.x + k2*u.y + k3*u.z + k4*u.x*u.y + k5*u.y*u.z + k6*u.z*u.x + k7*u.x*u.y*u.z);
+}
+
+float fractal_noise( vec3 P, float detail )
+{
+    float fscale = 1.0;
+    float amp = 1.0;
+    float sum = 0.0;
+    float octaves = clamp(detail, 0.0, 16.0);
+    int n = int(octaves);
+
+    for (int i = 0; i <= MAX_OCTAVES; i++) {
+        if (i > n) continue;
+        float t = noise(fscale * P);
+        sum += t * amp;
+        amp *= 0.5;
+        fscale *= 2.0;
+    }
+
+    return sum;
+}
+
+float cnoise( vec3 P, float scale, float detail )
+{
+    P *= scale;
+    return clamp(fractal_noise(P, detail), 0.0, 1.0);
+}

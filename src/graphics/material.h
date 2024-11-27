@@ -88,6 +88,8 @@ class VolumeMaterial : public Material {
 		PhaseFunction phase_function; 
 		float g_coef; 
 
+		bool use_jittering;
+
 		void setUniforms(Camera* camera, glm::mat4 model);
 		void render(Mesh* mesh, glm::mat4 model, Camera* camera);
 		void renderInMenu();
@@ -104,8 +106,12 @@ class IsosurfaceMaterial : public Material {
 		IsosurfaceMaterial(glm::vec4 _color, float _threshold);
 
 		float threshold;
-		float step_length = 0.05f;
+		float step_length = 0.05f; 
+		VolumeDensityMode density_mode; 
 
+		float scale = 2.209f;
+		float detail = 5.0f; 
+		bool use_jittering; 
 
 		void setUniforms(Camera* camera, glm::mat4 model);
 		void render(Mesh* mesh, glm::mat4 model, Camera* camera);

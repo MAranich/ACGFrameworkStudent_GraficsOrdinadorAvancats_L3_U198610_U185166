@@ -29,6 +29,14 @@ uniform float u_detail;
 uniform int u_source_density; 
 uniform sampler3D u_texture; 
 
+/*
+    u_source_density
+
+    0: uniform
+    1: random
+    2: bunny
+*/
+
 //Light
 uniform int u_num_lights; // invariant: 0 <= u_num_lights <= MAX_LIGHT
 uniform float u_light_intensity[MAX_LIGHT]; 
@@ -39,13 +47,9 @@ uniform int u_num_scattering_steps;
 uniform int u_phase_fn; 
 uniform float u_g; 
 
-/*
-    u_source_density
+uniform bool u_use_jittering; 
 
-    0: uniform
-    1: random
-    2: bunny
-*/
+
 
 
 
@@ -97,8 +101,10 @@ void main() {
 	float jitter = u_step_length * rand(gl_FragCoord.xy); 
     //Ray equation, integration
 	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
-	//vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
-	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + jitter); 
+	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
+    if(u_use_jittering) {
+        original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * rand(gl_FragCoord.xy)); 
+    } 
     //Variables init
 	float num_step = 0; 
 	float optical_thickness = 0; 
