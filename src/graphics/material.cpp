@@ -537,6 +537,45 @@ void IsosurfaceMaterial::setUniforms(Camera* camera, glm::mat4 model)
 
 	this->shader->setUniform("u_use_jittering", this->use_jittering); 
 
+	// LIGHTS
+
+	int num_iters; // min of MAX_LIGHT and the actual number of lights
+	if (MAX_LIGHT < Application::instance->light_list.size()) {
+		num_iters = MAX_LIGHT;
+	}
+	else {
+		num_iters = Application::instance->light_list.size();
+	}
+
+	float light_intensities[MAX_LIGHT] = { 0 };
+	float light_color[MAX_LIGHT * 3] = { 0 };
+	float light_position_loc[MAX_LIGHT * 3] = { 0 };
+
+	for (int l = 0; l < num_iters; l++) {
+		Light* current_light = Application::instance->light_list[l];
+
+		light_intensities[l] = current_light->intensity;
+
+		light_color[l * 3] = current_light->color[0];
+		light_color[l * 3 + 1] = current_light->color[1];
+		light_color[l * 3 + 2] = current_light->color[2];
+
+		glm::vec4 light_pos = current_light->model * glm::vec4(0, 0, 0, 1.0f);
+		light_pos.w = 1.0f;
+		light_pos = inv_model * light_pos;
+		glm::vec3 light_pos_local = (1.0f / light_pos.w) * glm::vec3(light_pos.x, light_pos.y, light_pos.z);
+
+		light_position_loc[l * 3] = light_pos_local[0];
+		light_position_loc[l * 3 + 1] = light_pos_local[1];
+		light_position_loc[l * 3 + 2] = light_pos_local[2];
+
+	}
+
+	this->shader->setUniform("u_num_lights", num_iters);
+	this->shader->setUniform1Array("u_light_intensity", light_intensities, num_iters);
+	this->shader->setUniform3Array("u_light_color", light_color, num_iters);
+	this->shader->setUniform3Array("u_light_pos_local", light_position_loc, num_iters);
+
 }
 
 void IsosurfaceMaterial::render(Mesh* mesh, glm::mat4 model, Camera* camera)

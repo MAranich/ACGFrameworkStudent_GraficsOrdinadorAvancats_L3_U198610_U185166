@@ -38,6 +38,22 @@ uniform float u_detail;
 
 uniform bool u_use_jittering; 
 
+
+//////////
+
+uniform bool u_use_phong; 
+#define h 0.00001
+//uniform vec3 diffuse_color; 
+uniform vec3 specular_color; 
+uniform int shininess; 
+
+//Light
+uniform int u_num_lights; // invariant: 0 <= u_num_lights <= MAX_LIGHT
+uniform float u_light_intensity[MAX_LIGHT]; 
+uniform vec3 u_light_color[MAX_LIGHT]; 
+uniform vec3 u_light_pos_local[MAX_LIGHT]; 
+
+
 out vec4 FragColor;
 
 
@@ -164,6 +180,47 @@ float get_density(vec3 curren_position_local) {
     return ret; 
 }
 
+vec3 get_radiance(vec3 curren_position) {
+
+    vec3 ret = vec3(0); 
+
+    for(int l = 0; l < u_num_lights; l++) { 
+        
+        vec3 incident_dir = curren_position - u_light_pos_local[l]; 
+        incident_dir = normalize(incident_dir); 
+        if (dot(incident_dir, ray_dir) <= 0.0f) {
+            // visibility term is 0
+            continue; 
+        }
+
+        vec3 dot_prod = dot(incident_dir, -get_gradient(curren_position)); 
+        vec3 light = u_light_color[l] * u_light_intensity[l]; 
+        vec3 brdf = reflectance_phong(curren_position); 
+
+        ret += light * dot_prod * brdf; 
+
+    }
+
+    float ambient = 0.1f; 
+    ret += u_color * ambient; 
+
+    return ret; 
+
+}
+
+vec3 get_gradient(vec3 current_position) {
+
+    float x = texture3D(u_texture, current_position + vec3(h, 0, 0)).x - texture3D(u_texture, current_position - vec3(h, 0, 0)).x; 
+    float y = texture3D(u_texture, current_position + vec3(0, h, 0)).x - texture3D(u_texture, current_position - vec3(0, h, 0)).x; 
+    float x = texture3D(u_texture, current_position + vec3(0, 0, h)).x - texture3D(u_texture, current_position - vec3(0, 0, h)).x; 
+    
+    return (1.0f / (2.0f * h)) * vec3(x, y, z); 
+}
+
+vec3 reflectance_phong(vec3 incident_dir) {
+    //todo
+    return vec3(0.2); 
+}
 
 // NOISE FUNCTIONS ///////////////////////////////////////////////////////
 
