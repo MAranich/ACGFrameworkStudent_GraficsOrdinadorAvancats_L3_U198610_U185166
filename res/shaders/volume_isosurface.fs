@@ -5,6 +5,7 @@
 #define INV_PI 1.0 / 3.14159265358979323846
 #define h 0.0002
 //#define h 0.0005
+#define TO_RGB 1.0/255.0
 #define MAX_LIGHT 8
 
 in vec3 v_normal;
@@ -240,7 +241,7 @@ vec3 get_radiance(vec3 curren_position) {
         incident_dir = normalize(incident_dir); 
         float dot_prod = dot(incident_dir, normal); 
         
-        vec3 brdf = reflectance_phong(curren_position, normal); 
+        vec3 brdf = reflectance_phong(incident_dir, normal); 
 
         ret += light * brdf * dot_prod; 
 

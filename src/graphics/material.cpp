@@ -492,6 +492,9 @@ IsosurfaceMaterial::IsosurfaceMaterial(glm::vec4 _color, float _threshold) {
 	this->detail = 5.0f;
 	this->use_jittering = true;
 
+	this->specular_color = glm::vec3(1.0f, 1.0f, 1.0f); 
+	this->shininess = 5; 
+
 
 }
 
@@ -535,7 +538,10 @@ void IsosurfaceMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_texture", this->texture, TEXTURE_SLOT);
 	this->shader->setUniform("u_source_density", this->density_mode);
 
-	this->shader->setUniform("u_use_jittering", this->use_jittering); 
+	this->shader->setUniform("u_use_jittering", this->use_jittering);
+
+	this->shader->setUniform("u_specular_color", this->specular_color);
+	this->shader->setUniform("u_shininess", this->shininess);
 
 	// LIGHTS
 
@@ -611,9 +617,11 @@ void IsosurfaceMaterial::renderInMenu()
 {
 
 	ImGui::ColorEdit3("Color", (float*)&this->color);
+	ImGui::ColorEdit3("Specular color", (float*)&this->specular_color);
 	ImGui::SliderFloat("Threshold", &this->threshold, 0.0f, 1.0f);
 	ImGui::Combo("Density mode", (int*)&this->density_mode, "Homogeneus\0Noise\0Bunny\0", 3);
 	ImGui::SliderFloat("Step length", &this->step_length, 0.0001f, 1.0f);
+	ImGui::SliderInt("Shynines", &this->shininess, 0, 40);
 
 	ImGui::SliderFloat("Scale", &this->scale, 0.001f, 4.5f);
 	ImGui::SliderFloat("Detail", &this->detail, 0.001f, 8.0f);

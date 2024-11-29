@@ -42,10 +42,10 @@ void Application::init(GLFWwindow* window)
     }
     else {
         glm::vec4 color = to_rgb * glm::vec4(240, 60, 14, 1);
-        example->material = new IsosurfaceMaterial(color, 0.5);
+        example->material = new IsosurfaceMaterial(color, 0.005);
 
         // simple white light
-        Light* sun = new Light(glm::vec3(1.5f, 1.5f, -1.5f), LIGHT_POINT, 0.8, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+        Light* sun = new Light(glm::vec3(1.5f, 1.5f, -1.5f), LIGHT_POINT, 255.0f/113.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
         this->light_list.push_back(sun);
         this->node_list.push_back(sun);
     }

@@ -113,6 +113,9 @@ class IsosurfaceMaterial : public Material {
 		float detail = 5.0f; 
 		bool use_jittering; 
 
+		glm::vec3 specular_color; 
+		int shininess; 
+
 		void setUniforms(Camera* camera, glm::mat4 model);
 		void render(Mesh* mesh, glm::mat4 model, Camera* camera);
 		void renderInMenu();
