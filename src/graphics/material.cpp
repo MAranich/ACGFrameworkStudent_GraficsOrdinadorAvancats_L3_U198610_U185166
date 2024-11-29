@@ -486,7 +486,7 @@ IsosurfaceMaterial::IsosurfaceMaterial(glm::vec4 _color, float _threshold) {
 	this->threshold = _threshold; 
 	this->density_mode = Bunny; 
 
-	this->step_length = 0.05f;
+	this->step_length = 0.005f;
 
 	this->scale = 2.209f;
 	this->detail = 5.0f;
@@ -549,7 +549,9 @@ void IsosurfaceMaterial::setUniforms(Camera* camera, glm::mat4 model)
 
 	float light_intensities[MAX_LIGHT] = { 0 };
 	float light_color[MAX_LIGHT * 3] = { 0 };
-	float light_position_loc[MAX_LIGHT * 3] = { 0 };
+	float light_position_loc[MAX_LIGHT * 3] = { 0 }; 
+	//float to_rgb = 1.0f / 255.0f;
+
 
 	for (int l = 0; l < num_iters; l++) {
 		Light* current_light = Application::instance->light_list[l];
@@ -611,7 +613,7 @@ void IsosurfaceMaterial::renderInMenu()
 	ImGui::ColorEdit3("Color", (float*)&this->color);
 	ImGui::SliderFloat("Threshold", &this->threshold, 0.0f, 1.0f);
 	ImGui::Combo("Density mode", (int*)&this->density_mode, "Homogeneus\0Noise\0Bunny\0", 3);
-	ImGui::SliderFloat("Step length", &this->step_length, 0.004f, 1.0f);
+	ImGui::SliderFloat("Step length", &this->step_length, 0.0001f, 1.0f);
 
 	ImGui::SliderFloat("Scale", &this->scale, 0.001f, 4.5f);
 	ImGui::SliderFloat("Detail", &this->detail, 0.001f, 8.0f);

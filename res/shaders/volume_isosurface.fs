@@ -3,6 +3,8 @@
 
 #define PI 3.14159265358979323846
 #define INV_PI 1.0 / 3.14159265358979323846
+#define h 0.0002
+//#define h 0.0005
 #define MAX_LIGHT 8
 
 in vec3 v_normal;
@@ -44,7 +46,6 @@ uniform bool u_use_jittering;
 //////////
 
 uniform bool u_use_phong; 
-#define h 0.01
 //uniform vec3 u_diffuse_color; 
 uniform vec3 u_specular_color; 
 uniform int u_shininess; 
@@ -122,13 +123,31 @@ void main() {
         float density = get_density(curren_position); 
 
         if(u_threshold <= density) {
-            // isosurface
-            //FragColor = u_color; 
 
-            //normal
-            vec3 n = get_radiance(curren_position); 
-            n = (n + 1.0) * 0.5; 
-            FragColor = vec4(n, 1); 
+            int mode = 2; 
+
+            if(mode == 0) {
+                // isosurface
+                FragColor = u_color; 
+            } else if(mode == 1) {
+                //normal
+
+                float minimum_normal_length = 0.01; 
+
+                vec3 normal = -get_gradient(curren_position); 
+                float normal_len_sq = dot(normal, normal); 
+                if(normal_len_sq < minimum_normal_length) {
+                    normal = vec3(0); 
+                } else {
+                    normal = normalize(normal); 
+                }
+                normal = (normal + 1.0) * 0.5; 
+
+                FragColor = vec4(normal, 1); 
+            } else {
+                // phong coloring
+                FragColor = vec4(get_radiance(curren_position), 1); 
+            }
             return; 
         }
 
@@ -194,52 +213,65 @@ float get_density(vec3 curren_position_local) {
 }
 
 vec3 get_radiance(vec3 curren_position) {
-
-    float minimum_normal_length = 0.001; 
-
+    
+    // u_color:  is diffuse coefititient and ambient coefitient
     vec3 ret = vec3(0); 
 
-    vec3 normal = -1.0 * get_gradient(curren_position); 
+    float minimum_normal_length = 0.01; 
+
+    vec3 normal = -get_gradient(curren_position); 
     float normal_len_sq = dot(normal, normal); 
     if(normal_len_sq < minimum_normal_length) {
-        return vec3(0.0); 
+        normal = vec3(0); 
+    } else {
+        normal = normalize(normal); 
     }
-    normal = normal / sqrt(normal_len_sq); 
 
-    return normal; 
-
-    /*
     for(int l = 0; l < u_num_lights; l++) { 
         
-        vec3 incident_dir = curren_position - u_light_pos_local[l]; 
-        incident_dir = normalize(incident_dir); 
-        if (dot(incident_dir, ray_dir) <= 0.0f) {
+        vec3 incident_dir = u_light_pos_local[l] - curren_position; 
+        if (dot(incident_dir, normal) <= 0.0f) {
             // visibility term is 0
             continue; 
         }
 
-
-        float dot_prod = dot(incident_dir, normal); 
         vec3 light = u_light_color[l] * u_light_intensity[l]; 
+        
+        incident_dir = normalize(incident_dir); 
+        float dot_prod = dot(incident_dir, normal); 
+        
         vec3 brdf = reflectance_phong(curren_position, normal); 
 
-        ret += light * dot_prod * brdf; 
+        ret += light * brdf * dot_prod; 
 
     }
 
     float ambient = 0.1f; 
     ret += u_color.xyz * ambient; 
 
+    // normalize
+    //float super_max = ret.x + ret.y + ret.z; 
+    //ret = ret / super_max; 
+    //ret = vec3(ret.x / (1.0 + ret.x), ret.y / (1.0 + ret.y), ret.z / (1.0 + ret.z)); 
+
     return ret; 
-    */
+        
+    
 
 }
 
-vec3 get_gradient(vec3 current_position) {
+vec3 get_gradient(vec3 current_position_local) {
 
-    float dx = texture3D(u_texture, current_position + vec3(h, 0, 0)).x - texture3D(u_texture, current_position - vec3(h, 0, 0)).x; 
-    float dy = texture3D(u_texture, current_position + vec3(0, h, 0)).x - texture3D(u_texture, current_position - vec3(0, h, 0)).x; 
-    float dz = texture3D(u_texture, current_position + vec3(0, 0, h)).x - texture3D(u_texture, current_position - vec3(0, 0, h)).x; 
+    vec3 vec_x = vec3(h, 0, 0); 
+    vec3 vec_y = vec3(0, h, 0); 
+    vec3 vec_z = vec3(0, 0, h); 
+
+    // position in texture coordinates
+    vec3 position = (current_position_local + 1) * 0.5; 
+
+    float dx = texture3D(u_texture, position + vec_x).x - texture3D(u_texture, position - vec_x).x; 
+    float dy = texture3D(u_texture, position + vec_y).x - texture3D(u_texture, position - vec_y).x; 
+    float dz = texture3D(u_texture, position + vec_z).x - texture3D(u_texture, position - vec_z).x; 
     
     float normalizer = 1.0f / (2.0f * h); 
     return normalizer * vec3(dx, dy, dz); 
@@ -250,11 +282,16 @@ vec3 reflectance_phong(vec3 incident_dir, vec3 normal) {
     // w_0 = ray_dir (direction from point to camera * +-1)
     // w_r = (reflection ray_dir)
 
+    ////////// DIFFUSE ////////////////
     // u_color is the diffuse coefitient
     vec3 diffuse = u_color.xyz * INV_PI; 
 
-    float dot_prod = dot(incident_dir, ray_dir); 
-    vec3 specular = u_specular_color * 2.0f * PI / (1.0f + u_shininess) * pow(dot_prod, u_shininess); 
+    ////////// SPECULAR ////////////////
+
+    vec3 reflected_dir = 2.0 * dot(incident_dir, normal) * normal - incident_dir;  
+    float dot_prod = dot(reflected_dir, ray_dir); 
+    vec3 specular = u_specular_color * (2.0f * PI / (1.0f + u_shininess)) * pow(dot_prod, u_shininess); 
+
 
     return diffuse + specular; 
 }

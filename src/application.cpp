@@ -30,10 +30,24 @@ void Application::init(GLFWwindow* window)
     bool use_normal_volume = false; 
     if (use_normal_volume) {
         example->material = new VolumeMaterial(glm::vec4(0, 13 * to_rgb, 0, 1));
+
+        Light* sun = new Light(glm::vec3(1.5f, 1.5f, -1.5f), LIGHT_POINT, 12.8f, glm::vec4(1.0f, 143 * to_rgb, 65 * to_rgb, 1.0f));
+        this->light_list.push_back(sun);
+        this->node_list.push_back(sun);
+
+        Light* moon = new Light(glm::vec3(1.5f, 2.0f, 0.0f), LIGHT_POINT, 3.141592f * 3.141592f, glm::vec4(50 * to_rgb, 100 * to_rgb, 200 * to_rgb, 1.0f));
+        this->light_list.push_back(moon);
+        this->node_list.push_back(moon);
+
     }
     else {
         glm::vec4 color = to_rgb * glm::vec4(240, 60, 14, 1);
         example->material = new IsosurfaceMaterial(color, 0.5);
+
+        // simple white light
+        Light* sun = new Light(glm::vec3(1.5f, 1.5f, -1.5f), LIGHT_POINT, 0.8, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+        this->light_list.push_back(sun);
+        this->node_list.push_back(sun);
     }
 
     this->node_list.push_back(example);
@@ -43,13 +57,7 @@ void Application::init(GLFWwindow* window)
     this->background_color = glm::vec3(25 * to_rgb, 25 * to_rgb, 25 * to_rgb);
 
 
-    Light* sun = new Light(glm::vec3(1.5f, 1.5f, -1.5f), LIGHT_POINT, 12.8f, glm::vec4(1.0f, 143 * to_rgb, 65 * to_rgb, 1.0f));
-    this->light_list.push_back(sun);
-    this->node_list.push_back(sun);
 
-    Light* moon = new Light(glm::vec3(1.5f, 2.0f, 0.0f), LIGHT_POINT, 3.141592f * 3.141592f, glm::vec4(50 * to_rgb, 100 * to_rgb, 200 * to_rgb, 1.0f));
-    this->light_list.push_back(moon);
-    this->node_list.push_back(moon);
 
     this->speed = 0.1f;
 
