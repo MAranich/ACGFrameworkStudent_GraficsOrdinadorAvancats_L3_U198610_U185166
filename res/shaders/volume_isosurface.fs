@@ -2,6 +2,8 @@
 //#version 130 core
 
 #define PI 3.14159265358979323846
+#define INV_PI 1.0 / 3.14159265358979323846
+#define MAX_LIGHT 8
 
 in vec3 v_normal;
 in vec3 v_position;
@@ -42,10 +44,10 @@ uniform bool u_use_jittering;
 //////////
 
 uniform bool u_use_phong; 
-#define h 0.00001
-//uniform vec3 diffuse_color; 
-uniform vec3 specular_color; 
-uniform int shininess; 
+#define h 0.01
+//uniform vec3 u_diffuse_color; 
+uniform vec3 u_specular_color; 
+uniform int u_shininess; 
 
 //Light
 uniform int u_num_lights; // invariant: 0 <= u_num_lights <= MAX_LIGHT
@@ -62,6 +64,11 @@ vec3 world_to_local(vec3 world, mat4 model);
 
 float get_density(vec3 curren_position_local); 
  
+vec3 get_radiance(vec3 curren_position); 
+vec3 get_gradient(vec3 current_position); 
+vec3 reflectance_phong(vec3 incident_dir, vec3 normal); 
+
+
 #define MAX_OCTAVES 16
 
 float hash1( float n ); 
@@ -115,7 +122,13 @@ void main() {
         float density = get_density(curren_position); 
 
         if(u_threshold <= density) {
-            FragColor = u_color; 
+            // isosurface
+            //FragColor = u_color; 
+
+            //normal
+            vec3 n = get_radiance(curren_position); 
+            n = (n + 1.0) * 0.5; 
+            FragColor = vec4(n, 1); 
             return; 
         }
 
@@ -182,8 +195,20 @@ float get_density(vec3 curren_position_local) {
 
 vec3 get_radiance(vec3 curren_position) {
 
+    float minimum_normal_length = 0.001; 
+
     vec3 ret = vec3(0); 
 
+    vec3 normal = -1.0 * get_gradient(curren_position); 
+    float normal_len_sq = dot(normal, normal); 
+    if(normal_len_sq < minimum_normal_length) {
+        return vec3(0.0); 
+    }
+    normal = normal / sqrt(normal_len_sq); 
+
+    return normal; 
+
+    /*
     for(int l = 0; l < u_num_lights; l++) { 
         
         vec3 incident_dir = curren_position - u_light_pos_local[l]; 
@@ -193,33 +218,45 @@ vec3 get_radiance(vec3 curren_position) {
             continue; 
         }
 
-        vec3 dot_prod = dot(incident_dir, -get_gradient(curren_position)); 
+
+        float dot_prod = dot(incident_dir, normal); 
         vec3 light = u_light_color[l] * u_light_intensity[l]; 
-        vec3 brdf = reflectance_phong(curren_position); 
+        vec3 brdf = reflectance_phong(curren_position, normal); 
 
         ret += light * dot_prod * brdf; 
 
     }
 
     float ambient = 0.1f; 
-    ret += u_color * ambient; 
+    ret += u_color.xyz * ambient; 
 
     return ret; 
+    */
 
 }
 
 vec3 get_gradient(vec3 current_position) {
 
-    float x = texture3D(u_texture, current_position + vec3(h, 0, 0)).x - texture3D(u_texture, current_position - vec3(h, 0, 0)).x; 
-    float y = texture3D(u_texture, current_position + vec3(0, h, 0)).x - texture3D(u_texture, current_position - vec3(0, h, 0)).x; 
-    float x = texture3D(u_texture, current_position + vec3(0, 0, h)).x - texture3D(u_texture, current_position - vec3(0, 0, h)).x; 
+    float dx = texture3D(u_texture, current_position + vec3(h, 0, 0)).x - texture3D(u_texture, current_position - vec3(h, 0, 0)).x; 
+    float dy = texture3D(u_texture, current_position + vec3(0, h, 0)).x - texture3D(u_texture, current_position - vec3(0, h, 0)).x; 
+    float dz = texture3D(u_texture, current_position + vec3(0, 0, h)).x - texture3D(u_texture, current_position - vec3(0, 0, h)).x; 
     
-    return (1.0f / (2.0f * h)) * vec3(x, y, z); 
+    float normalizer = 1.0f / (2.0f * h); 
+    return normalizer * vec3(dx, dy, dz); 
 }
 
-vec3 reflectance_phong(vec3 incident_dir) {
-    //todo
-    return vec3(0.2); 
+vec3 reflectance_phong(vec3 incident_dir, vec3 normal) {
+    // w_i = incident_dir
+    // w_0 = ray_dir (direction from point to camera * +-1)
+    // w_r = (reflection ray_dir)
+
+    // u_color is the diffuse coefitient
+    vec3 diffuse = u_color.xyz * INV_PI; 
+
+    float dot_prod = dot(incident_dir, ray_dir); 
+    vec3 specular = u_specular_color * 2.0f * PI / (1.0f + u_shininess) * pow(dot_prod, u_shininess); 
+
+    return diffuse + specular; 
 }
 
 // NOISE FUNCTIONS ///////////////////////////////////////////////////////
@@ -228,17 +265,15 @@ float rand(vec2 co) {
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-float hash1( float n )
-{
-    return fract( n*17.0*fract( n*0.3183099 ) );
+float hash1( float n ) {
+    return fract( n * 17.0 * fract( n * 0.3183099 ) );
 }
 
-float noise( vec3 x )
-{
+float noise( vec3 x ) {
     vec3 p = floor(x);
     vec3 w = fract(x);
     
-    vec3 u = w*w*w*(w*(w*6.0-15.0)+10.0);
+    vec3 u = w * w * w * (w * (w * 6.0 - 15.0) + 10.0);
     
     float n = p.x + 317.0*p.y + 157.0*p.z;
     
@@ -249,7 +284,7 @@ float noise( vec3 x )
     float e = hash1(n+157.0);
     float f = hash1(n+158.0);
     float g = hash1(n+474.0);
-    float h = hash1(n+475.0);
+    float hh = hash1(n+475.0);
 
     float k0 =   a;
     float k1 =   b - a;
@@ -258,13 +293,12 @@ float noise( vec3 x )
     float k4 =   a - b - c + d;
     float k5 =   a - c - e + g;
     float k6 =   a - b - e + f;
-    float k7 = - a + b + c - d + e - f - g + h;
+    float k7 = - a + b + c - d + e - f - g + hh;
 
     return -1.0+2.0*(k0 + k1*u.x + k2*u.y + k3*u.z + k4*u.x*u.y + k5*u.y*u.z + k6*u.z*u.x + k7*u.x*u.y*u.z);
 }
 
-float fractal_noise( vec3 P, float detail )
-{
+float fractal_noise( vec3 P, float detail ) {
     float fscale = 1.0;
     float amp = 1.0;
     float sum = 0.0;
@@ -282,8 +316,7 @@ float fractal_noise( vec3 P, float detail )
     return sum;
 }
 
-float cnoise( vec3 P, float scale, float detail )
-{
+float cnoise( vec3 P, float scale, float detail ) {
     P *= scale;
     return clamp(fractal_noise(P, detail), 0.0, 1.0);
 }
