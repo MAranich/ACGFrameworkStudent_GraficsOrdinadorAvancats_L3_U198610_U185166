@@ -107,8 +107,10 @@ void main() {
     //Ray equation, integration
 	//vec3 curren_position = u_local_camera_position + ray_dir * (t_near + u_step_length * (0.5 + num_step)); 
 	vec3 original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * 0.5); 
+
+    //TASK 1: Using jittering
     if(u_use_jittering) {
-        original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * rand(gl_FragCoord.xy)); 
+        original_pos = u_local_camera_position + ray_dir * (t_near + u_step_length * rand(gl_FragCoord.xy)); //using rand() function
     } 
     
     //Variables init
@@ -122,7 +124,7 @@ void main() {
         
         // get_density() is the cnoise or texture3D, or 1 (case homogeneous)
         float density = get_density(curren_position); 
-
+        // We cast the ray and march through the volume until we reach the threshold
         if(u_threshold <= density) {
 
             int mode = 2; 
@@ -135,14 +137,14 @@ void main() {
 
                 float minimum_normal_length = 0.01; 
 
-                vec3 normal = -get_gradient(curren_position); 
+                vec3 normal = -get_gradient(curren_position); //Normal is the inverse of the gradient
                 float normal_len_sq = dot(normal, normal); 
-                if(normal_len_sq < minimum_normal_length) {
+                if(normal_len_sq < minimum_normal_length) { 
                     normal = vec3(0); 
                 } else {
                     normal = normalize(normal); 
                 }
-                normal = (normal + 1.0) * 0.5; 
+                normal = (normal + 1.0) * 0.5; //Texture coordinates
 
                 FragColor = vec4(normal, 1); 
             } else {
@@ -222,7 +224,7 @@ vec3 get_radiance(vec3 curren_position) {
 
     vec3 normal = -get_gradient(curren_position); 
     float normal_len_sq = dot(normal, normal); 
-    if(normal_len_sq < minimum_normal_length) {
+    if(normal_len_sq < minimum_normal_length) { 
         normal = vec3(0); 
     } else {
         normal = normalize(normal); 
@@ -230,30 +232,25 @@ vec3 get_radiance(vec3 curren_position) {
 
     for(int l = 0; l < u_num_lights; l++) { 
         
-        vec3 incident_dir = u_light_pos_local[l] - curren_position; 
-        if (dot(incident_dir, normal) <= 0.0f) {
+        vec3 incident_dir = u_light_pos_local[l] - curren_position; //wi
+        if (dot(incident_dir, normal) <= 0.0f) { 
             // visibility term is 0
             continue; 
         }
 
-        vec3 light = u_light_color[l] * u_light_intensity[l]; 
+        vec3 light = u_light_color[l] * u_light_intensity[l]; //Li 
         
         incident_dir = normalize(incident_dir); 
-        float dot_prod = dot(incident_dir, normal); 
+        float dot_prod = dot(incident_dir, normal);  //wi·N
         
-        vec3 brdf = reflectance_phong(incident_dir, normal); 
+        vec3 brdf = reflectance_phong(incident_dir, normal); //fr
 
-        ret += light * brdf * dot_prod; 
+        ret += light * brdf * dot_prod; //V*Li*fr*(wi·N)
 
     }
 
     float ambient = 0.1f; 
-    ret += u_color.xyz * ambient; 
-
-    // normalize
-    //float super_max = ret.x + ret.y + ret.z; 
-    //ret = ret / super_max; 
-    //ret = vec3(ret.x / (1.0 + ret.x), ret.y / (1.0 + ret.y), ret.z / (1.0 + ret.z)); 
+    ret += u_color.xyz * ambient;  // L(wo) = V*Li*fr*(wi·N) + ambient
 
     return ret; 
         
@@ -269,13 +266,13 @@ vec3 get_gradient(vec3 current_position_local) {
 
     // position in texture coordinates
     vec3 position = (current_position_local + 1) * 0.5; 
-
+   
     float dx = texture3D(u_texture, position + vec_x).x - texture3D(u_texture, position - vec_x).x; 
     float dy = texture3D(u_texture, position + vec_y).x - texture3D(u_texture, position - vec_y).x; 
     float dz = texture3D(u_texture, position + vec_z).x - texture3D(u_texture, position - vec_z).x; 
     
     float normalizer = 1.0f / (2.0f * h); 
-    return normalizer * vec3(dx, dy, dz); 
+    return normalizer * vec3(dx, dy, dz);  //Gradient
 }
 
 vec3 reflectance_phong(vec3 incident_dir, vec3 normal) {
