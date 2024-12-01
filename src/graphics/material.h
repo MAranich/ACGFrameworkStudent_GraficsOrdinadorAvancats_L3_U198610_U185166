@@ -16,6 +16,7 @@
 
 enum VolumeDensityMode { Homogeneus, Noise, Bunny };
 enum PhaseFunction { Isotropic, HenyeyGreenstein, Cardioid };
+enum IsosurfaceMode { Flat, Normals, Phong };
 
 class Material {
 public:
@@ -112,6 +113,8 @@ class IsosurfaceMaterial : public Material {
 		float scale = 2.209f;
 		float detail = 5.0f; 
 		bool use_jittering; 
+
+		IsosurfaceMode mode; 
 
 		glm::vec3 specular_color; 
 		int shininess; 

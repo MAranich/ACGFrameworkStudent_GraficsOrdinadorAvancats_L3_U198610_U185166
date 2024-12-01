@@ -492,6 +492,8 @@ IsosurfaceMaterial::IsosurfaceMaterial(glm::vec4 _color, float _threshold) {
 	this->detail = 5.0f;
 	this->use_jittering = true;
 
+	this->mode = Phong; 
+
 	this->specular_color = glm::vec3(1.0f, 1.0f, 1.0f); 
 	this->shininess = 5; 
 
@@ -530,6 +532,7 @@ void IsosurfaceMaterial::setUniforms(Camera* camera, glm::mat4 model)
 	this->shader->setUniform("u_threshold", this->threshold);
 	this->shader->setUniform("u_step_length", step_length);
 
+	this->shader->setUniform("u_mode", this->mode);
 	this->shader->setUniform("u_scale", scale);
 	this->shader->setUniform("u_detail", detail);
 
@@ -622,6 +625,7 @@ void IsosurfaceMaterial::renderInMenu()
 	ImGui::Combo("Density mode", (int*)&this->density_mode, "Homogeneus\0Noise\0Bunny\0", 3);
 	ImGui::SliderFloat("Step length", &this->step_length, 0.0001f, 1.0f);
 	ImGui::SliderInt("Shynines", &this->shininess, 0, 40);
+	ImGui::SliderInt("Isosurface mode", (int*)&this->mode, 0, 2);
 
 	ImGui::SliderFloat("Scale", &this->scale, 0.001f, 4.5f);
 	ImGui::SliderFloat("Detail", &this->detail, 0.001f, 8.0f);

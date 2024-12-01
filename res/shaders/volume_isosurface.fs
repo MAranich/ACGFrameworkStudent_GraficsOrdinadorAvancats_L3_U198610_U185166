@@ -46,7 +46,7 @@ uniform bool u_use_jittering;
 
 //////////
 
-uniform bool u_use_phong; 
+uniform int u_mode; 
 //uniform vec3 u_diffuse_color; 
 uniform vec3 u_specular_color; 
 uniform int u_shininess; 
@@ -127,30 +127,59 @@ void main() {
         // We cast the ray and march through the volume until we reach the threshold
         if(u_threshold <= density) {
 
-            int mode = 2; 
+            switch (u_mode) {
+                // case 0 = deafult
+                case 1: 
+                    // normals
+                    float minimum_normal_length = 0.01; 
 
-            if(mode == 0) {
-                // isosurface
-                FragColor = u_color; 
-            } else if(mode == 1) {
-                //normal
+                    vec3 normal = -get_gradient(curren_position); //Normal is the inverse of the gradient
+                    float normal_len_sq = dot(normal, normal); 
+                    if(normal_len_sq < minimum_normal_length) { 
+                        normal = vec3(0); 
+                    } else {
+                        normal = normalize(normal); 
+                    }
+                    normal = (normal + 1.0) * 0.5; //Texture coordinates
 
-                float minimum_normal_length = 0.01; 
+                    FragColor = vec4(normal, 1); 
+                    break; 
 
-                vec3 normal = -get_gradient(curren_position); //Normal is the inverse of the gradient
-                float normal_len_sq = dot(normal, normal); 
-                if(normal_len_sq < minimum_normal_length) { 
-                    normal = vec3(0); 
-                } else {
-                    normal = normalize(normal); 
-                }
-                normal = (normal + 1.0) * 0.5; //Texture coordinates
-
-                FragColor = vec4(normal, 1); 
-            } else {
-                // phong coloring
-                FragColor = vec4(get_radiance(curren_position), 1); 
+                case 2: 
+                    // phong coloring
+                    FragColor = vec4(get_radiance(curren_position), 1); 
+                    break; 
+                default : 
+                    // isosurface
+                    FragColor = u_color; 
+                    break; 
             }
+
+            /*
+
+                if(mode == 0) {
+                    // isosurface
+                    FragColor = u_color; 
+                } else if(mode == 1) {
+                    //normal
+
+                    float minimum_normal_length = 0.01; 
+
+                    vec3 normal = -get_gradient(curren_position); //Normal is the inverse of the gradient
+                    float normal_len_sq = dot(normal, normal); 
+                    if(normal_len_sq < minimum_normal_length) { 
+                        normal = vec3(0); 
+                    } else {
+                        normal = normalize(normal); 
+                    }
+                    normal = (normal + 1.0) * 0.5; //Texture coordinates
+
+                    FragColor = vec4(normal, 1); 
+                } else {
+                    // phong coloring
+                    FragColor = vec4(get_radiance(curren_position), 1); 
+                } 
+            */
             return; 
         }
 
